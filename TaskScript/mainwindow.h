@@ -52,7 +52,7 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
     int returnDiag();
     double returnProm();
 
-    string mayorPreS(); //Medicamento con mayor prescritura
+    string mayorPreS(); //OBSOLETE
 
     //vectores que utilizara
     vector<Columna> column;
@@ -60,9 +60,9 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
     vector<ErrorSintactico> errSintax;
 
     //Funciones a utilizar
-    string mayorCarga();
-    int returnEncargados();
-    int returnTarea();
+    string mayorCarga(); //mayor carga por usuario
+    int returnEncargados(); // retorno de numero de encargados
+    int returnTarea(); //retorno de tareas
     //
     QString archivoActual;
     //OBSOLETE
@@ -75,19 +75,21 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
     QString kanban();
     QString reporteCarga();
     */
-    QString lexicalErrors();
+
 
 
     //NEW REPORTES
-    QString todo_Reporte();
-    QString carga_per_user();
-    QString errores_LS();
+    QString todo_Reporte(); //REPORTE DE TAREAS
+    QString carga_per_user(); //REPORTE DE CARGA POR USUARIO
+    QString lexicalErrors(); // REPORTE DE ERRORES
     QString dotFile(); //ARBOL SINTAXIS
     QString clearCorrupted(const string& texto); //limpiar comillas pedorras
 
     void setDisable();
     void setupTablaTokens();
     void setupTablaErrores();
+    void setupTablaProduccion();
+    void setupTablaErroresS();
     void aplicarEstilos(); //ESTILOS
     void imprimirConsola();
     void conectarUI();

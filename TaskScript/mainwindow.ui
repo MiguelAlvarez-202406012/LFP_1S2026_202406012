@@ -105,7 +105,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -262,29 +262,6 @@
      </property>
      <property name="text">
       <string>ERRORES</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QGroupBox" name="groupBox_5">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>470</y>
-      <width>601</width>
-      <height>251</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>ESTRUCTURA SINTACTICA (PRODUCCION)</string>
-    </property>
-    <widget class="QTextEdit" name="tbl_production">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>30</y>
-       <width>581</width>
-       <height>211</height>
-      </rect>
      </property>
     </widget>
    </widget>

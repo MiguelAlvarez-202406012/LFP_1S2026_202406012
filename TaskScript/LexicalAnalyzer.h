@@ -55,8 +55,8 @@ public:
     // Retorna todos los tokens del archivo
     vector<Token> tokenize(); //declara vector para tokenizacion y mostrar en tablas
     // Errores acumulados durante el análisis
-    vector<ErrorLexico> errores_L;
-    vector<ErrorSintactico> errores_S;
+    vector<ErrorLexico> errores_L; // almacena errores lexicos
+    vector<ErrorSintactico> errores_S; //almacena los errores sintacticos
 
     bool parse();
 
@@ -79,12 +79,14 @@ private:
     //!
     //!
     int tokenActual;
-    vector<Token>tokens; //guardar tokens
-    Token Consume(TokenType awaiting);
+    vector<Token>tokens; //guardar tokens para sintax
+    Token Consume(TokenType awaiting); //consume tokens
     Token currentToken() const;
 
     void  registrarError_L(const string& lexema,const string& tipo,const string& desc);
     void  registrarError_S(const string& desc);
+
+    //parseo
     void parsePrograma();
     void parseColumns();
     void parseColumn();
@@ -99,12 +101,9 @@ private:
     //ENVIA NECESITA EL LEXEMA EL TIPO Y LO ENVIA AL VECTOR DE ERRORLEXICO
 
     //REGISTRAR DATOS EN LEXICALANALYZER
-    void registrarColumnas(const vector<Token>& tokens, int& pos);
+    void registrarColumnas(const vector<Token>& tokens, int& pos); //durante la lectura del archivo lee la estructura segn como esta definida en lexicalAnalyzer.cpp
     void mostrarContenido();
-
     //UNUSED
-
-
 
 };
 

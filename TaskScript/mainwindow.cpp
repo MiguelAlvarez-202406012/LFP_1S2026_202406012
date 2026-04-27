@@ -36,10 +36,11 @@ MainWindow::MainWindow(QWidget *parent) //CONSTRUCTOR DE UI (SE PUEDEN EJECUTRA 
     , ui(new Ui::MainWindow) //Inicia UI
 {
     ui->setupUi(this);
-    setWindowTitle("(LEXER + SINTAX)");
+    setWindowTitle("TaskScript Reader 0.1.0");
     conectarUI();
     setupTablaErrores();
     setupTablaTokens();
+    setupTablaErroresS();
 }
 
 
@@ -50,7 +51,8 @@ void MainWindow::conectarUI(){
     connect(ui->btnReporte1, &QPushButton::clicked, this, &MainWindow::abrirReporte1);
     connect(ui->btnReporte2, &QPushButton::clicked, this, &MainWindow::abrirReporte2);
     connect(ui->btnReporte5, &QPushButton::clicked, this, &MainWindow::abrirReporte5);
-
+    //connect funciona para vincular botones del la Interfaz grafica y que hagan una accioin
+    //que se definio en el header de private slots
 
     for (auto *btn : {ui->btnReporte1, ui->btnReporte2, ui->btnReporte5}) {
         btn->setEnabled(false);
@@ -78,7 +80,15 @@ void MainWindow::setupTablaErrores(){
     ui->tbl_errors->setAlternatingRowColors(true);
     ui->tbl_errors->verticalHeader()->setVisible(false);
 }
-
+void MainWindow::setupTablaErroresS(){
+    ui->tbl_sError->setColumnCount(1);
+    ui->tbl_sError->setHorizontalHeaderLabels({"Tipo de Error"});
+    ui->tbl_sError->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+    ui->tbl_sError->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tbl_sError->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tbl_sError->setAlternatingRowColors(true);
+    ui->tbl_sError->verticalHeader()->setVisible(false);
+}
 
 
 MainWindow::~MainWindow()
@@ -159,6 +169,14 @@ void MainWindow::analizarArchivo() { //ALTERACION
         ui->tbl_errors->setItem(i, 5, new QTableWidgetItem(QString::number(e.columna)));
     }
 
+    ui->tbl_sError->setRowCount(0);
+    //poblar tabla de errores S
+    for(int i = 0 ; i < (int)lexer.errores_S.size();i++){
+        auto& e = lexer.errores_S[i];
+        ui->tbl_sError->insertRow(i);
+        ui->tbl_sError->setItem(i,0,new QTableWidgetItem(QString::fromStdString(e.descripcion)));
+    }
+
     for (auto *btn : {ui->btnReporte1, ui->btnReporte2, ui->btnReporte5})
         btn->setEnabled(true);
 
@@ -189,14 +207,82 @@ QString MainWindow::clearCorrupted(const string& texto){
 //
 
 
-/////////////////////////////// REPORTE: HIST CLIENTE ///////////////////////////////////////////////////////////////////////////
+////////////////! REPORTE GENERAR POR ENCARGAD////////////////////////////////////////////////////
 
-void MainWindow::abrirReporte1() { //GENERAR REPORTE KANBAN
-    //REPORTE DE CITAS
+int manyFilesLoad = 0; //Numero de archivos Creados
+bool itExistsLoad = false; //Si el archivo existe para errores lexicos
+void MainWindow::abrirReporte2() { //GENERAR REPORTE DE ENCARGADOS
 
-    //GENERAR CITAS
-    qInfo() << "Generando reporte Historial Pacientes ";
-/*
+    qInfo() << "Generando reporte de Cargas por Encargado ";
+    if (archivoActual.isEmpty()) {
+        qWarning() << "ERROR: No hay archivo cargado";
+        QMessageBox::warning(this, "Error", "Primero carga un archivo .med");
+        return;
+    }
+
+    if(itExistsLoad == false){
+        if(!archivoActual.isEmpty()){
+            QString ruta = QFileInfo(archivoActual).absolutePath();
+            QString path = ruta + "/r_incharge.html"; //Ruta donde se almacenara
+
+            QDir dir(ruta);
+            if(!dir.exists()){
+                QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
+                return; //defunde la fucnbion
+            }
+            QString htmlContents = carga_per_user(); //genera el reporte con datos
+            QFile archivo(path); //guarda el archivo
+            if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
+                QTextStream out(&archivo);
+                out << htmlContents;
+                archivo.close();
+                //POPUP
+                QMessageBox::information(this, "Citas!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
+                manyFilesLoad++;
+                itExistsLoad = true;
+            }else{
+                QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
+            }
+        }
+
+
+    }else{
+        QMessageBox::information(this, "Advertencia, Archivo numero: " + QString::number(manyFilesLoad),"El archivo que intenta crear ya existe, Se generarar otro archivo nuevo.");
+        if(!archivoActual.isEmpty()){
+            QString ruta = QFileInfo(archivoActual).absolutePath();
+            QString path = ruta + "/r_incharge"  + QString::number(manyFilesLoad) +  ".html"; //Ruta donde se almacenara
+
+            QDir dir(ruta);
+            if(!dir.exists()){
+                QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
+                return; //defunde la fucnbion
+            }
+
+            QString htmlContents = carga_per_user(); //genera el reporte con datos
+            QFile archivo(path); //guarda el archivo
+            if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
+                QTextStream out(&archivo);
+                out << htmlContents;
+                archivo.close();
+                //POPUP
+                QMessageBox::information(this, "Archivo Generado!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
+                manyFilesLoad++;
+            }else{
+                QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
+            }
+        }
+    }
+
+}
+
+/////////////////////////////// GENERADOR DE REPORTE: ERRORES ///////////////////////////////////////////////////////////////////////////
+int manyFilesErrors = 0; //Numero de archivos Creados
+bool itExistsErrors = false; //Si el archivo existe para errores lexicos
+void MainWindow::abrirReporte5() { //REPORTE DE ERRORES LEXICOS + ARBOL
+
+
+    qInfo() << "Generando reporte de Errores lexicos y Sintacticos ";
+
 
     if (archivoActual.isEmpty()) {
         qWarning() << "ERROR: No hay archivo cargado";
@@ -204,73 +290,168 @@ void MainWindow::abrirReporte1() { //GENERAR REPORTE KANBAN
         return;
     }
 
-    if(!archivoActual.isEmpty()){
-        QString ruta = QFileInfo(archivoActual).absolutePath();
-        QString path = ruta + "/reporte_historial_pacientes.html"; //Ruta donde se almacenara
+    if(itExistsErrors == false){
+        if(!archivoActual.isEmpty()){
+            QString ruta = QFileInfo(archivoActual).absolutePath();
+            QString path = ruta + "/r_errors.html"; //Ruta donde se almacenara
 
-        QDir dir(ruta);
-        if(!dir.exists()){
-            QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
-            return; //defunde la fucnbion
+            QDir dir(ruta);
+            if(!dir.exists()){
+                QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
+                return; //defunde la fucnbion
+            }
+            QString htmlContents = lexicalErrors(); //genera el reporte con datos
+            QFile archivo(path); //guarda el archivo
+            if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
+                QTextStream out(&archivo);
+                out << htmlContents;
+                archivo.close();
+                //POPUP
+                QMessageBox::information(this, "Citas!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
+                manyFilesErrors++;
+                itExistsErrors = true;
+            }else{
+                QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
+            }
         }
 
 
-        QString htmlContents = clientHist(); //!genera el reporte con datos CAMBIAR
-        QFile archivo(path); //guarda el archivo
-        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream out(&archivo);
-            out << htmlContents;
-            archivo.close();
-            //POPUP
-            QMessageBox::information(this, "Historial Pacientes!","Reporte de Historial de Pacientes Generado correctamente correctamente.");
+    }else{
+        QMessageBox::information(this, "Advertencia, Archivo numero: " + QString::number(manyFilesErrors),"El archivo que intenta crear ya existe, Se generarar otro archivo nuevo.");
+        if(!archivoActual.isEmpty()){
+            QString ruta = QFileInfo(archivoActual).absolutePath();
+            QString path = ruta + "/r_errors_"  + QString::number(manyFilesErrors) +  ".html"; //Ruta donde se almacenara
 
-        }else{
-            QMessageBox::information(this, "ERROR, Historial Pacientes!","Ocurrio un error al GENERAR el archivo");
+            QDir dir(ruta);
+            if(!dir.exists()){
+                QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
+                return; //defunde la fucnbion
+            }
+
+            QString htmlContents = lexicalErrors(); //genera el reporte con datos
+            QFile archivo(path); //guarda el archivo
+            if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
+                QTextStream out(&archivo);
+                out << htmlContents;
+                archivo.close();
+                //POPUP
+                QMessageBox::information(this, "Archivo Generado!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
+                manyFilesErrors++;
+            }else{
+                QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
+            }
         }
     }
-*/
+
+
+
+    //Generar Reporte de Errores lexicos
+}
+
+
+/////////////////////////////// REPORTE: KANBAN ///////////////////////////////////////////////////////////////////////////
+int manyFilesKAN = 0; //Numero de archivos Creados
+bool itExistsKAN = false; //Si el archivo existe para errores lexicos
+void MainWindow::abrirReporte1() { //GENERAR REPORTE KANBAN
+    //REPORTE DE CITAS
+
+    //GENERAR CITAS
+    qInfo() << "Generando reporte KANBAN ";
+
+    if (archivoActual.isEmpty()) {
+        qWarning() << "ERROR: No hay archivo cargado";
+        QMessageBox::warning(this, "Error", "Primero carga un archivo .med");
+        return;
+    }
+
+    if(itExistsKAN == false){
+        if(!archivoActual.isEmpty()){
+            QString ruta = QFileInfo(archivoActual).absolutePath();
+            QString path = ruta + "/r_KANBAN.html"; //Ruta donde se almacenara
+
+            QDir dir(ruta);
+            if(!dir.exists()){
+                QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
+                return; //defunde la fucnbion
+            }
+            QString htmlContents = todo_Reporte(); //genera el reporte con datos
+            QFile archivo(path); //guarda el archivo
+            if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
+                QTextStream out(&archivo);
+                out << htmlContents;
+                archivo.close();
+                //POPUP
+                QMessageBox::information(this, "KANBAN!","Reporte de KANBAN generado correctamente.");
+                manyFilesKAN++;
+                itExistsKAN = true;
+            }else{
+                QMessageBox::information(this, "ERROR, Reporte KANBAN!","Ocurrio un error al GENERAR el archivo");
+            }
+        }
+
+
+    }else{
+        QMessageBox::information(this, "Advertencia, Archivo numero: " + QString::number(manyFilesKAN),"El archivo que intenta crear ya existe, Se generarar otro archivo nuevo.");
+        if(!archivoActual.isEmpty()){
+            QString ruta = QFileInfo(archivoActual).absolutePath();
+            QString path = ruta + "/r_KANBAN"  + QString::number(manyFilesKAN) +  ".html"; //Ruta donde se almacenara
+
+            QDir dir(ruta);
+            if(!dir.exists()){
+                QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
+                return; //defunde la fucnbion
+            }
+
+            QString htmlContents = todo_Reporte(); //genera el reporte con datos
+            QFile archivo(path); //guarda el archivo
+            if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
+                QTextStream out(&archivo);
+                out << htmlContents;
+                archivo.close();
+                //POPUP
+                QMessageBox::information(this, "Citas!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
+                manyFilesKAN++;
+            }else{
+                QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
+            }
+        }
+    }
 
 
 }
 
 /////////////////////////////// REPORTE: MEDICOS Y CARGA ///////////////////////////////////////////////////////////////////////////
-/*
- *
- *
- *
-QString MainWindow::clientHist(){ //CREAR HTML DE HISTORIAL DE PACIENTES
 
-
-    //SEGUN EL NOMBRE, DIAGNOSTICO Y TODAS ESAS COSAS
-
-
+QString MainWindow::todo_Reporte(){ //CREA HTML PARA TAREAS KANBAN
     QString html = R"(
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial Pacientes</title>
-    <style>
-        body {
+    <title>Reporte KANBAN</title>
+<style>
+ body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 40px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #373737;
+            color: #ffffff;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
+            background-color: rgb(15, 15, 15);
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 30px;
         }
         h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
+            color: #ba6824;
+            border-bottom: 3px solid #ff7b00da;
             padding-bottom: 10px;
         }
+        h2{  color: #e1af52; border-bottom: 3px solid #ff7b00da; padding-bottom: 10px; }
+
         .fecha {
             color: #7f8c8d;
             text-align: right;
@@ -282,27 +463,7 @@ QString MainWindow::clientHist(){ //CREAR HTML DE HISTORIAL DE PACIENTES
             margin-top: 20px;
         }
         th {
-            background-color: #239923;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        .ACTIVE{
-            background-color: #6596D6;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        .UNK{
-            background-color: #E8C03C;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        .CRIT{
-            background-color: #FF0000;
+            background-color: #e87714;
             color: white;
             padding: 12px;
             text-align: left;
@@ -313,436 +474,235 @@ QString MainWindow::clientHist(){ //CREAR HTML DE HISTORIAL DE PACIENTES
             border-bottom: 1px solid #ddd;
         }
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #41362c;
         }
 
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1> HISTORIAL DE CLIENTES </h1>
-        <div class="fecha">
-            Fecha de generación: )" + QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss") + R"(
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Paciente</th>
-                    <th>Edad</th>
-                    <th>Tipo \n Sangre</th>
-                    <th>Diagnostico </th>
-                    <th>Medicamento</th>
-                    <th>Intervalo de Dosis </th>
-                    <th>Estado </th>
-
-                </tr>
-            </thead>
-        <tbody>
-    )"; //tbody donde iran el contenido, Y EN ORDEN DE DECLARACION
-    //Iteracion para pacientes
-    for (size_t i = 0; i < pacientes.size(); i++) {
-        string currentCondition;
-        string currentMed;
-        string currentDosis;
-
-        //BUSCAR POR COINCIDENCIA
-
-        for (int d = 0; d < diagnosticos.size(); ++d) {
-            if(diagnosticos[d].nombre_p == pacientes[i].nombre){
-                //MISMO NOMBRE
-                currentCondition = diagnosticos[d].condit;
-                currentMed = diagnosticos[d].medicamento;
-                currentDosis = diagnosticos[d].dosis;
-            }
+        .kanban-board {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                padding: 20px;
+                background: #ff7b00;
+                font-family: 'Segoe UI', sans-serif;
         }
 
-
-
-        html += "            <tr>\n";
-        html += "            <td>" + QString::fromStdString(pacientes[i].nombre) + "</td>\n"; //NOMBRE
-        html += "            <td>" + QString::fromStdString(pacientes[i].edad) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(pacientes[i].blood) + "</td>\n";
-        //REGISTRAR CONDICIONES
-        if(currentCondition.empty() ||currentCondition == ""){
-            html += "            <td>" + QString::fromStdString("SIN DIAGNOSTICOS") + "</td>\n";
-        }else{
-            html += "            <td>" + QString::fromStdString(currentMed) + "</td>\n";
-        }
-
-        //REGISTRAR MEDICAMENTOS
-        if(currentMed.empty() ||currentMed == ""){
-            html += "            <td>" + QString::fromStdString(" - ") + "</td>\n";
-        }else{
-            html += "            <td>" + QString::fromStdString(currentDosis) + "</td>\n";
-        }
-
-        //REGISTRAR INTERVALO
-        if(currentDosis.empty() ||currentDosis == ""){
-            html += "            <td>" + QString::fromStdString(" - ") + "</td>\n";
-        }else{ //POR EL MOMENTO
-            html += "            <td>" + QString::fromStdString(currentDosis) + "</td>\n";
-        }
-
-        //REGISTRAR ESTADO DE PACIENTE
-        if(currentDosis.empty() ||currentDosis == ""){
-            html += "            <td class='UNK'>" + QString::fromStdString("SIN DIAGNOSTICOS") + "</td>\n";
-        }else if (currentDosis == "DIARIA"){ //POR EL MOMENTO
-            html += "            <td class='CRIT'>" + QString::fromStdString("CRITICO") + "</td>\n";
-        }else if (currentDosis == "CADA_12_HORAS" ||
-                   currentDosis == "CADA_8_HORAS" ||
-                   currentDosis == "SEMANAL"){ //POR EL MOMENTO
-            html += "            <td class='ACTIVE'>" + QString::fromStdString("ACTIVO") + "</td>\n";
-        }
-
-
-        html += "        </tr>\n";
-    }
-
-    html += R"(
-            </tbody>
-        </table>
-
-    </div>
-</body>
-</html>
-    )";
-
-    return html;
-
-
-}
-
---
-QString MainWindow::reportMed(){ //GENERAR HTML PARA REPORTE MEDICOS (TEST), USA EL CONTENEDOR DE MAINWINDOW.CPP
-
-    //oi quiero descansar
-    //A USAR SET
-
-    QString html = R"(
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Médicos</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
+        .kanban-column {
+            background: #2e2e2e;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 30px;
-        }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-        }
-        .fecha {
-            color: #7f8c8d;
-            text-align: right;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th {
-            background-color: #239923;
-            color: white;
             padding: 12px;
-            text-align: left;
+            height: fit-content;
         }
 
-        .low{
-            background-color: #6596D6;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        .medium{
-            background-color: #30BF43;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        .high{
-            background-color: #E8C03C;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        .saturated{
-            background-color: #FF0000;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        td {
+        .column-header {
             padding: 10px;
-            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
         }
-        tr:hover {
-            background-color: #f5f5f5;
+
+        .column-header h2 {
+            font-size: 1.1em;
+            margin: 0;
+            color: #e7873e;
         }
-        .total {
-            margin-top: 20px;
+
+        .badge {
+            background: #422c090f;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: rgb(255, 177, 128);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(58, 5, 22, 0.15);
+        }
+
+        .task-title {
             font-weight: bold;
-            color: #2c3e50;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1> LISTADO DE MÉDICOS POR ESPECIALIDAD</h1>
-        <div class="fecha">
-            Fecha de generación: )" + QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss") + R"(
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-
-                    <th>Nombre del Médico</th>
-                    <th>Código</th>
-                    <th>Especialidad</th>
-                    <th>Citas Programadas</th>
-                    <th>Pacientes </th>
-                    <th>Carga </th>
-
-                </tr>
-            </thead>
-        <tbody>
-    )";
-    //Iteracion para medicos
-    for (size_t i = 0; i < medicos.size(); i++) {
-
-        //! PARA CADA MEDICO ESTARAN ESTOS DATOS
-        int citasProg = 0; //DEFECTO
-        string carga_a = ""; //BAJA = 0 ,0 NORMAL = 3 , ALTA = 5 , SATURADA  5<
-        set<string> pacientesUnicos; //SET SE
-        int pacientesProg = 0; //DEFECTO
-        //! PARA CADA MEDICO ESTARAN ESTOS DATOS
-
-        for (size_t p = 0; p < cita.size() ; ++p) { //TERMINA EL RECORRIDO
-            //LECTURA PARA REVISAR QUE TIENE MEDICOS
-            if(medicos[i].nombre == cita[p].nombre_dr){
-                //SI ENCUENTRA UNA COINCIDENCIA
-                citasProg++;
-
-                pacientesUnicos.insert(cita[p].nombre_p); //SET ME AHORRO UN MONTON
-                //SET ES EL MALDITO GOAT
-            }
-            //REGISTRAR QUE EL PACIENTE YA HAYA SIDO CONTADO
-        }
-        pacientesProg = pacientesUnicos.size();
-        //AGREGAR A TABLA
-        html += "        <tr>\n";
-        html += "            <td>" + QString::fromStdString(medicos[i].nombre) + "</td>\n"; //NOMBRE
-        html += "            <td>" + QString::fromStdString(medicos[i].codigo) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(medicos[i].especialidad) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(to_string(citasProg)) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(to_string(pacientesProg)) + "</td>\n";
-
-        //NIVEL DE CARGA
-
-        if(citasProg <= 1){
-            html += "            <td class='low'>" + QString::fromStdString("BAJA") + "</td>\n";
-        }else if(citasProg >= 3 && citasProg < 5){
-            html += "            <td class='medium'>" + QString::fromStdString("NORMAL") + "</td>\n";
-        }else if(citasProg >= 5 && citasProg < 8){
-            html += "            <td class='high'>" + QString::fromStdString("ALTA") + "</td>\n";
-        }else if(citasProg > 8){
-            html += "            <td class='saturated'>" + QString::fromStdString("SATURADA") + "</td>\n";
+            font-size: 1em;
+            margin-bottom: 8px;
+            color: #ffffff;
         }
 
-        html += "        </tr>\n";
-    }
-
-    html += R"(
-            </tbody>
-        </table>
-
-    </div>
-</body>
-</html>
-    )";
-
-    return html;
-}
-
-
-
-QString MainWindow::citasReport(){ //HTML CITAS
-    //EN LA GENERACION DE REPORTE SE REALIZARA LA INSPECCION DE SI EXISTEN DATOS QUE COINCIDEN O NO
-
-
-    QString html = R"(
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda de Citas</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-            color: #333;
+        .priority-high {
+            border-left-color: #ff0015;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 30px;
-        }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-        }
-        .fecha {
-            color: #7f8c8d;
-            text-align: right;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th {
-            background-color: #239923;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        .priority-high .task-priority {
+            color: #ff0015;
+            background: #7f050f36;
         }
 
-        .confirm{
-            background-color: #239923;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        .priority-medium {
+            border-left-color: #74461c;
+        }
+        .priority-medium .task-priority {
+            color: #ffa502;
+            background: #73410e2d;
         }
 
-        .pending{
-            background-color: #E8C03C;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        .priority-low {
+            border-left-color: #3af636;
         }
-        .conflict{
-            background-color: #FF0000;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        .priority-low {
+            color:  #3af636;
+            background: #2ed5731a;
         }
 
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        .total {
-            margin-top: 20px;
+        .task-priority {
+            display: inline-block;
+            font-size: 0.7em;
             font-weight: bold;
-            color: #2c3e50;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin: 6px 0;
+        }
+
+        .task-date, .task-assignee  {
+            display: inline-block;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin: 6px 0;
+
+            color: #ffffff;
+            margin-top: 6px;
+
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1> AGENDA DE CITAS</h1>
+        <h1> KANBAN </h1>
         <div class="fecha">
             Fecha de generación: )" + QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss") + R"(
         </div>
+        <h2>todas las tareas se registran en el tablero KANBAN</h2>
+        <div class='kanban-board'>
+            )";
+            //COLECCIONAR POR PRIORIDAD
+            vector<Tarea> low;
+            vector<Tarea> medium;
+            vector<Tarea> high;
+            int manyTareas_low = 0;
+            int manyTareas_med = 0;
+            int manyTareas_high = 0;
 
-        <table>
-            <thead>
-                <tr>
+            /*recorrer el vector de contenedor y registrar por prioridad, luego pegarlos en sus respectivas cartas
+                ,luego realizar por segmentos la asignacion de cartas
+            */
+            for(int p = 0; p < column.size() ; p++){ //lectura por cada columna
+                qDebug() << "columna actual" << column[p].Columna;
+                for(int t = 0; t < column[p].tarea_column.size() ; t++){ //lectura para cada tarea de una columna
+                    string priority = column[p].tarea_column[t].nivel_prioridad;
+                    if(priority == "BAJA"){
+                        low.push_back(column[p].tarea_column[t]);
+                        qDebug() << "Se Agrego la tarea con Prioridad ALTA";
+                        manyTareas_low++;
+                    }else if(priority == "MEDIA"){
+                        medium.push_back(column[p].tarea_column[t]);
+                        qDebug() << "Se Agrego la tarea con Prioridad MEDIA";
+                         manyTareas_med++;
+                    }else if(priority == "ALTA"){
+                        high.push_back(column[p].tarea_column[t]);
+                        qDebug() << "Se Agrego la tarea con Prioridad BAJA";
+                        manyTareas_high++;
+                    }else{
 
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Paciente</th>
-                    <th>Medico \n Encargado</th>
-                    <th>Especialidad </th>
-                    <th>Estado </th>
+                    }
 
-                </tr>
-            </thead>
-        <tbody>
-    )";
-    //Iteracion para citas
-    for (size_t i = 0; i < cita.size(); i++) {
 
-        string especialidad;
-        bool hasConflict = false;
-
-        for(size_t d = 0 ; d < medicos.size(); d++){
-            if(medicos[d].nombre == cita[i].nombre_dr){
-                especialidad = medicos[d].especialidad;
-            }
-        }
-
-        //validar conflcitos
-        for(size_t c = 0 ; c< cita.size();c++){
-            if(i != c){ //compara las demas excepto a la cita actual
-
-                if(cita[i].nombre_dr == cita[c].nombre_dr &&
-                    cita[i].fecha == cita[c].fecha && // RECORRE UN FOR APARTE PARA REVISAR QUE NO HAYAN CONFLCITOS
-                    cita[i].hora == cita[c].hora){
-                    hasConflict = true;
-                    conflicts++;
-                    break;
                 }
             }
-        }
+            html += R"(
+
+            <div class="kanban-column">
+                <div class="column-header">
+                    <h2>PRIORIDAD BAJA
+                     )";
+                    html += "<span class='badge'>" +  QString::fromStdString("No. Tareas: ") + QString::number(manyTareas_low) + "</span>";
+                    //Salir
+                    html+= R"(
+                    </h2>
+                     </div>
 
 
-        //AGREGAR A TABLA
-        html += "        <tr>\n";
-        html += "            <td>" + QString::fromStdString(cita[i].fecha) + "</td>\n"; //NOMBRE
-        html += "            <td>" + QString::fromStdString(cita[i].hora) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(cita[i].nombre_p) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(cita[i].nombre_dr) + "</td>\n";
-        html += "            <td>" + QString::fromStdString(especialidad) + "</td>\n";
+                    )";
+                    //GENERAR UNA TARJETA PARA PRIORIDAD BAJA
+                    for (int l =0; l < low.size();l++){
+                        html += "<div class='task-card priority-low'>";
+                            html += "<div class='task-title'>" + QString::fromStdString(low[l].nombre_tarea) +"</div>";
+                            html += "<div class='task-priority priority-low'>" + QString::fromStdString(low[l].nivel_prioridad) +"</div>";
+                            html += "<div class='task-date'>" + QString::fromStdString(low[l].fecha_limit) +"</div>";
+                            html += "<div class='task-assignee'>" + QString::fromStdString(low[l].responsable) +"</div>";
+                        html += "</div>";
 
+                    }
+            html +=R"(
+             </div>
+            <div class="kanban-column">
+                <div class="column-header">
+                    <h2>PRIORIDAD MEDIA
+                     )";
+                    html += "<span class='badge'>" +  QString::fromStdString("No. Tareas: ") + QString::number(manyTareas_med) + "</span>";
+                    //Salir
+                    html+= R"(
+                    </h2>
+                </div>
+                    )";
+                    //GENERAR UNA TARJETA PARA PRIORIDAD BAJA
+                    for (int l =0; l < medium.size();l++){
+                        html += "<div class='task-card priority-medium'>";
+                        html += "<div class='task-title'>" + QString::fromStdString(medium[l].nombre_tarea) +"</div>";
+                        html += "<div class='task-priority priority-medium'>" + QString::fromStdString(medium[l].nivel_prioridad) +"</div>";
+                        html += "<div class='task-date'>" + QString::fromStdString(medium[l].fecha_limit) +"</div>";
+                        html += "<div class='task-assignee'>" + QString::fromStdString(medium[l].responsable) +"</div>";
+                        html += "</div>";
 
-        //CITAS CON CONFLICTOS
-        if(hasConflict){
-            html += "            <td class='conflict'>" + QString::fromStdString("CONFLICTO") + "</td>\n";
-        }if(cita[i].fecha.empty() ||
-            cita[i].fecha == "" ||
-            cita[i].hora == "" ||
-            cita[i].hora.empty()){
-            html += "            <td class='pending'>" + QString::fromStdString("PENDIENTE") + "</td>\n";
-        }else{
-            html += "            <td class='confirm'>" + QString::fromStdString("CONFIRMADO") + "</td>\n";
-        }
+                    }
+                    html +=R"(
+                </div>
+            <div class="kanban-column">
+                <div class="column-header">
+                    <h2>PRIORIDAD ALTA
+                     )";
+                    html += "<span class='badge'>" +  QString::fromStdString("No. Tareas: ") + QString::number(manyTareas_high) + "</span>";
+                    //Salir
+                    html+= R"(
+                    </h2>
+                </div>
+                    )";
+                    //GENERAR UNA TARJETA PARA PRIORIDAD BAJA
+                    for (int l =0; l < high.size();l++){
+                        html += "<div class='task-card priority-high'>";
+                        html += "<div class='task-title'>" + QString::fromStdString(high[l].nombre_tarea) +"</div>";
+                        html += "<div class='task-priority priority-high'>" + QString::fromStdString(high[l].nivel_prioridad) +"</div>";
+                        html += "<div class='task-date'>" + QString::fromStdString(high[l].fecha_limit) +"</div>";
+                        html += "<div class='task-assignee'>" + QString::fromStdString(high[l].responsable) +"</div>";
+                        html += "</div>";
 
+                    }
+                    html +=R"(
+                 </div>
 
-        html += "        </tr>\n";
-    }
-
-    html += R"(
-            </tbody>
-        </table>
-
+                 </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
@@ -753,367 +713,37 @@ QString MainWindow::citasReport(){ //HTML CITAS
 
 }
 
- */
 
-void MainWindow::abrirReporte2() { //GENERAR REPORTE DE ENCARGADOS
-    /*
-     *     QMessageBox::information(this, "DEBUG!", "Se Genero Listado de Medicos!");
-    QDesktopServices::openUrl(QUrl::fromLocalFile(
-        QFileInfo(archivoActual).absolutePath() + "/reporte_medicos.html"));
-
-    qInfo() << "Generar Reporte Medicos";
-
-    if (archivoActual.isEmpty()) {
-        qWarning() << "ERROR: No hay archivo cargado";
-        QMessageBox::warning(this, "Error", "Primero carga un archivo .med");
-        return;
-    }
-
-    if(!archivoActual.isEmpty()){
-        QString ruta = QFileInfo(archivoActual).absolutePath();
-        QString path = ruta + "/reporte_med.html"; //Ruta donde se almacenara
-
-        QDir dir(ruta);
-        if(!dir.exists()){
-            QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
-            return; //defunde la fucnbion
-        }
-
-
-        QString htmlContents = reportMed(); //genera el reporte con datos
-        QFile archivo(path); //guarda el archivo
-        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream out(&archivo);
-            out << htmlContents;
-            archivo.close();
-            //POPUP
-            QMessageBox::information(this, "Reporte Medicos!","Reporte de médicos generado correctamente.");
-
-        }else{
-            QMessageBox::information(this, "ERROR, Reporte Medicos!","Ocurrio un error al GENERAR el archivo");
-        }
-    }
-
-    */
-
-
-}
-
-/////////////////////////////// REPORTE: CITAS ///////////////////////////////////////////////////////////////////////////
-
-
-
-void MainWindow::abrirReporte5() { //REPORTE DE ERRORES LEXICOS + ARBOL
-/*
-    qInfo() << "Generando reporte Citas ";
-
-    if (archivoActual.isEmpty()) {
-        qWarning() << "ERROR: No hay archivo cargado";
-        QMessageBox::warning(this, "Error", "Primero carga un archivo .med");
-        return;
-    }
-
-    if(!archivoActual.isEmpty()){
-        QString ruta = QFileInfo(archivoActual).absolutePath();
-        QString path = ruta + "/reporte_citas.html"; //Ruta donde se almacenara
-
-        QDir dir(ruta);
-        if(!dir.exists()){
-            QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
-            return; //defunde la fucnbion
-        }
-
-
-        QString htmlContents = citasReport(); //genera el reporte con datos
-        QFile archivo(path); //guarda el archivo
-        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream out(&archivo);
-            out << htmlContents;
-            archivo.close();
-            //POPUP
-            QMessageBox::information(this, "Citas!","Reporte de Citas generado correctamente.");
-
-        }else{
-            QMessageBox::information(this, "ERROR, Reporte Citas!","Ocurrio un error al GENERAR el archivo");
-        }
-    }
-*/
-    //GENERAR CITAS
-
-
-
-
-}
-
-/////////////////////////////// REPORTE: GENERAL HOSPITAL ///////////////////////////////////////////////////////////////////////////
-
-
-/*
-
-string MainWindow::mayorPreS(){
-    string mayorPres;
-    int maxFrec = 0;
-    //TOCA USAR MAP ME CAGO EN TODO
-    if(column.empty()){
-        return "NO HAY COLUMNAS REGISTRADAS ";
-    }
-    //mapa sin orden
-    //Almacena datos sin ordenarlos
-    unordered_map<string,int> frecuenciaTareas;
-
-
-    for(int d =0; d<column.size();d++){
-        if(!column[d].tarea_column.empty()){ //Si no esta vacio el vector de tareas
-
-        }
-    }
-
-    if(frecuenciaTareas.empty()){
-        return "NO HAY TAREAS REGISTRADOS";
-    }
-
-    //foreach para los dos datos
-
-    for(const auto& [tarea,frecuencia]: frecuenciaTareas){
-        if(frecuencia > maxFrec){
-            maxFrec = frecuencia;
-            mayorPres = tarea;
-        }
-    }
-    return mayorPres + " || Veces Recetada: " + to_string(maxFrec);
-
-}
-
-
-string MainWindow::mayorCarga(){
-
-    int CARDIOLOGIA;
-    int NEUROLOGIA;
-    int PEDIATRIA;
-    int CIRUGIA;
-    int MEDICINA_GENERAL;
-    int ONCOLOGIA;
-
-
-    //REVISAR POR CITAS LUEGO BUSCAR EL NOMBRE DEL DOCTOR Y SU ESPECIALIDAD, ir sumando las especialidades aparte y finalmente comparar cada una la mayor sera la que salga del string;
-    for (int cit = 0; cit < cita.size(); ++cit) {
-        for(int m = 0; m < medicos.size(); ++m){
-            if(medicos[m].nombre == cita[cit].nombre_dr){
-                //Si al leer el vector de medicos coincide la cita
-                //ACA VIENE UN IF FEO
-                if(medicos[m].especialidad == "CARDIOLOGIA")
-                    CARDIOLOGIA++;
-            }else if(medicos[m].especialidad == "NEUROLOGIA"){
-                NEUROLOGIA++;
-            }else if(medicos[m].especialidad == "PEDIATRIA"){
-                PEDIATRIA++;
-            }else if(medicos[m].especialidad == "CIRUGIA"){
-                CIRUGIA++;
-            }else if(medicos[m].especialidad == "MEDICINA_GENERAL"){
-                MEDICINA_GENERAL++;
-            }else if(medicos[m].especialidad == "ONCOLOGIA"){
-                ONCOLOGIA++;
-            }
-        }
-    }
-    //FIN DE IF
-
-    if(CARDIOLOGIA > NEUROLOGIA &&
-        CARDIOLOGIA > PEDIATRIA &&
-        CARDIOLOGIA > CIRUGIA &&
-        CARDIOLOGIA > MEDICINA_GENERAL &&
-        CARDIOLOGIA > ONCOLOGIA){
-        return "CARDIOLOGIA";
-    }else if(NEUROLOGIA > CARDIOLOGIA &&
-               NEUROLOGIA > PEDIATRIA &&
-               NEUROLOGIA > CIRUGIA &&
-               NEUROLOGIA > MEDICINA_GENERAL &&
-               NEUROLOGIA > ONCOLOGIA){
-        return "NEUROLOGIA";
-    }else if(PEDIATRIA > CARDIOLOGIA &&
-               PEDIATRIA > NEUROLOGIA &&
-               PEDIATRIA > CIRUGIA &&
-               PEDIATRIA > MEDICINA_GENERAL &&
-               PEDIATRIA > ONCOLOGIA){
-        return "PEDIATRIA";
-    }else if(CIRUGIA > CARDIOLOGIA &&
-               CIRUGIA > NEUROLOGIA &&
-               CIRUGIA > PEDIATRIA &&
-               CIRUGIA > MEDICINA_GENERAL &&
-               CIRUGIA > ONCOLOGIA){
-        return "CIRUGIA";
-    }else if(MEDICINA_GENERAL > CARDIOLOGIA &&
-               MEDICINA_GENERAL > NEUROLOGIA &&
-               MEDICINA_GENERAL > CIRUGIA &&
-               MEDICINA_GENERAL > PEDIATRIA &&
-               MEDICINA_GENERAL > ONCOLOGIA){
-        return "MEDICINA_GENERAL";
-    }else if(ONCOLOGIA > CARDIOLOGIA &&
-               ONCOLOGIA > NEUROLOGIA &&
-               ONCOLOGIA > CIRUGIA &&
-               ONCOLOGIA > MEDICINA_GENERAL &&
-               ONCOLOGIA > PEDIATRIA){
-        return "ONCOLOGIA";
-    }
-
-    return "DESCONOCIDO";
-}
-*/
-
-/*
-
-QString MainWindow::dotFile(){
-    QString dot = "digraph Hospital {\n";
-    dot += "    // Configuración global\n";
-    dot += "    rankdir=TB;\n";
-    dot += "    splines=ortho;\n";
-    dot += "    nodesep=0.5;\n";
-    dot += "    ranksep=0.8;\n";
-    dot += "    node [fontname=\"Arial\", fontsize=10];\n";
-    dot += "    edge [fontname=\"Arial\", fontsize=8];\n\n";
-    dot += "    // Encoding\n";
-    dot += "    charset=\"UTF-8\";\n\n";
-    //main
-    dot += "    // Nodo principal\n";
-    dot += "    Hospital [shape=ellipse, style=filled, fillcolor=lightgreen, fontsize=14];\n\n";
-    set<string> especialidades;
-    for (const auto& m : medicos) {
-        if (!m.especialidad.empty()) {
-            especialidades.insert(m.especialidad);
-        }
-    }
-
-    if (!especialidades.empty()) {
-        dot += "    // Especialidades\n";
-        dot += "    subgraph cluster_especialidades {\n";
-        dot += "        label=\"Especialidades\";\n";
-        dot += "        style=filled;\n";
-        dot += "        fillcolor=lightgray;\n";
-        dot += "        node [shape=ellipse, style=filled, fillcolor=lightyellow];\n\n";
-
-        for (const auto& esp : especialidades) {
-            QString espEscapado = clearCorrupted(esp);
-            dot += "        \"" + espEscapado + "\";\n";
-        }
-        dot += "    }\n\n";
-
-        for (const auto& esp : especialidades) {
-            QString espEscapado = clearCorrupted(esp);
-            dot += "    Hospital -> \"" + espEscapado + "\" [label=\"tiene\"];\n";
-        }
-        dot += "\n";
-    }
-
-    //!medicos
-    dot += "    // Médicos\n";
-    dot += "    subgraph cluster_medicos {\n";
-    dot += "        label=\"Médicos\";\n";
-    dot += "        style=filled;\n";
-    dot += "        fillcolor=aliceblue;\n";
-    dot += "        node [shape=box, style=filled];\n\n";
-
-    //!contar numero de citas
-    unordered_map<string, int> citasPorMedico;
-    for (const auto& c : cita) {
-        citasPorMedico[c.nombre_dr]++;
-    }
-
-    for (const auto& m : medicos) {
-        int numCitas = citasPorMedico[m.nombre];
-        QString color;
-
-        if (numCitas <= 1) {
-            color = "lightgreen";
-        } else if (numCitas <= 3) {
-            color = "lightyellow";
-        } else if (numCitas <= 6) {
-            color = "orange";
-        } else {
-            color = "lightcoral";
-        }
-
-        QString nombreEscapado = clearCorrupted(m.nombre);
-        QString especialidadEscapada = clearCorrupted(m.especialidad);
-
-        dot += "        \"" + nombreEscapado + "\" ";
-        dot += "[label=\"" + nombreEscapado + "\\n" + especialidadEscapada +
-               "\\n(" + QString::number(numCitas) + " citas)\", ";
-        dot += "fillcolor=" + color + "];\n";
-    }
-    dot += "    }\n\n";
-
-    //!ESPECIALIDADES
-    for (const auto& m : medicos) {
-        if (!m.especialidad.empty()) {
-            QString espEscapado = clearCorrupted(m.especialidad);
-            QString nombreEscapado = clearCorrupted(m.nombre);
-            dot += "    \"" + espEscapado + "\" -> \"" + nombreEscapado + "\" [label=\"pertenece\"];\n";
-        }
-    }
-    dot += "\n";
-
-    //!PACIENTES
-    set<string> pacientesUnicos;
-    for (const auto& c : cita) {
-        pacientesUnicos.insert(c.nombre_p);
-    }
-
-    if (!pacientesUnicos.empty()) {
-        dot += "    // Pacientes\n";
-        dot += "    subgraph cluster_pacientes {\n";
-        dot += "        label=\"Pacientes\";\n";
-        dot += "        style=filled;\n";
-        dot += "        fillcolor=seashell;\n";
-        dot += "        node [shape=ellipse, style=filled, fillcolor=lightgreen];\n\n";
-
-        for (const auto& p : pacientesUnicos) {
-            QString pacienteEscapado = clearCorrupted(p);
-            dot += "        \"" + pacienteEscapado + "\";\n";
-        }
-        dot += "    }\n\n";
-        for (const auto& c : cita) {
-            QString drEscapado = clearCorrupted(c.nombre_dr);
-            QString pacienteEscapado = clearCorrupted(c.nombre_p);
-            dot += "    \"" + drEscapado + "\" -> \"" + pacienteEscapado + "\" [label=\"cita\"];\n";
-        }
-        dot += "\n";
-    }
-
-    dot += "}\n";
-
-    return dot;
-}
-
-QString MainWindow::hospitalStats(){ //GENERACION DE HTML GENERAL HOSPITAL
-
-
+QString MainWindow::carga_per_user(){
     QString html = R"(
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte General</title>
+    <title>Reporte por Carga</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 40px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #373737;
+            color: #ffffff;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
+            background-color: rgb(15, 15, 15);
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 30px;
         }
         h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
+            color: #ba6824;
+            border-bottom: 3px solid #ff7b00da;
             padding-bottom: 10px;
         }
+        h2{  color: #e1af52; border-bottom: 3px solid #ff7b00da; padding-bottom: 10px; }
+
         .fecha {
             color: #7f8c8d;
             text-align: right;
@@ -1125,227 +755,129 @@ QString MainWindow::hospitalStats(){ //GENERACION DE HTML GENERAL HOSPITAL
             margin-top: 20px;
         }
         th {
-            background-color: #239923;
+            background-color: #e87714;
             color: white;
             padding: 12px;
-            text-align: left;
+            text-align: center;
         }
-
-        .low{
-            background-color: #6596D6;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        thead{
+            text-align: center;
         }
-        .medium{
-            background-color: #30BF43;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        .high{
-            background-color: #E8C03C;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        .saturated{
-            background-color: #FF0000;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        td {
+        td, th {
             padding: 10px;
             border-bottom: 1px solid #ddd;
+
         }
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #41362c;
         }
         .total {
             margin-top: 20px;
             font-weight: bold;
-            color: #2c3e50;
+            color: #50402c;
         }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>REPORTE GENERAL HOSPITAL</h1>
+        <h1> Carga Por persona</h1>
         <div class="fecha">
             Fecha de generación: )" + QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss") + R"(
         </div>
 
-        <h2> INDICADOR CALVE DE HOSPITAL</h2>
         <table>
             <thead>
                 <tr>
-
-                    <th>Indicador</th>
-                    <th>Valor</th>
-
-
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>NOMBRE HOSPITAL</td>
-                    <td>)" + "HOSPITAL SAN CARLOS DE GUATEMALA" + R"(</td>
-                </tr>
-
-                <tr>
-                    <td>PACIENTES REGISTRADOS</td>
-                    <td>)" + QString::number(returnPacient()) + R"(</td>
-                </tr>
-                <tr>
-                    <td>MEDICOS REGISTRADOS</td>
-                    <td>)" + QString::number(returnMeds()) + R"(</td>
-                </tr>
-                <tr>
-                    <td>CITAS REGISTRADAS</td>
-                    <td>)" + QString::number(returnCita()) + R"(</td>
-                </tr>
-                <tr>
-                    <td>CITAS CON CONFLICTOS</td>
-                    <td>)" + QString::number(conflicts) + R"(</td>
-                </tr>
-                <tr>
-                    <td>PACIENTES CON DIAGNOSTICOS ACTIVOS</td>
-                    <td>)" + QString::number(returnDiag()) + R"(</td>
-                </tr>
-                <tr>
-                    <td>MEDICAMENTO CON MAS PREESCRITURAS</td>
-                    <td>)" + QString::fromStdString(mayorPreS()) + R"(</td>
-                </tr>
-                <tr>
-                    <td>ESPECIALIDAD CON MAYOR CARGA DE CITAS</td>
-                    <td>)" + QString::fromStdString(mayorCarga()) + R"(</td>
-                </tr>
-                <tr>
-                    <td>EDAD PROMEDIO DE PACIENTES</td>
-                    <td>)" + QString::number(returnProm()) + R"(</td>
-                </tr>
-
-            </tbody>
-        </table>
-
-        <h2> POR ESPECIALIDAD </h2>
-
-        <table>
-            <thead>
-                <tr>
-
-                    <th>Especialidad</th>
-                    <th>Medicos</th>
-                    <th>Citas</th>
-                    <th>Pacientes</th>
-                    <th>Ocupacion </th>
+                    <th>encargado</th>
+                    <th>Tareas asignadas</th>
+                    <th>Prioridad Baja</th>
+                    <th>Prioridad Media</th>
+                    <th>Prioridad Alta</th>
+                    <th>Carga</th>
 
                 </tr>
             </thead>
         <tbody>
     )";
-    //Contenido General
-    //CADA TR es TABLE ROW
-    // |_> TD es el contenido que se desplaza ala derecha
-    //DEBO ITERAR POR CADA TABLE ROW
+    //ADENTRO DEL TBODY
+    //Contenido por codigo
+    //RECORRE LA COLUMNAS Y TOMA A CADA UNO DE LOS ENCARGADOS Y POR MAP IRA INCREMENTANDO EL NUMERO DE TAREAS
+    //SEGUN EL NUMERO DE TAREAS TENDRA SU NIVEL DE PRIORIDAD
+    set<string> responsables;
+    unordered_map<string, vector<int>> conteoPrioridad;  // [0]=ALTA, [1]=MEDIA, [2]=BAJA
+    unordered_map<string, int> totalTareasPorResponsable;
 
-    set<string>especialidades;
-    //LECTURA POR ESPECIALIDAD
+    // Recorrer todas las columnas y tareas para recolectar datos
+    for (int col = 0; col < (int)column.size(); col++) {
+        for (int tarea = 0; tarea < (int)column[col].tarea_column.size(); tarea++) {
+            string responsable = column[col].tarea_column[tarea].responsable;
+            string prioridad = column[col].tarea_column[tarea].nivel_prioridad;
 
-    for(const auto& med : medicos){
-        if(!med.especialidad.empty()){ //si en el pivote, encuentra una estructura y especialidad no esta vacio
-            especialidades.insert(med.especialidad);
-        }
+            // Insertar responsable en el set
+            responsables.insert(responsable);
 
-    }
-    //LECTURA POR MAP
-    unordered_map<string,int>c_medicos; //Almacenan las especialidades reconocidas por el set
-    unordered_map<string,int>c_citas;
-    unordered_map<string,int>c_pacientes;
-    for(const auto& esp_a : especialidades){
-        c_medicos[esp_a]=0;
-        c_citas[esp_a]=0;
-        c_pacientes[esp_a]=0;
-        //cada nueva especialidad encontrada sera con valor 0 en cada una
-        // si encuentra 9 especialidades, reconocera esas 9 pero actualmente con valor 0
-    }
-    //Contar medicos por especialidad
-
-    for(const auto& howMed : medicos){
-        c_medicos[howMed.especialidad]++;
-        //conteo por especialidad
-    }
-
-    //contar citas por especialidad
-
-    for(const auto& howCita : cita){ //recorre las citas
-        for(const auto& howMed : medicos){ //busca la especialidad
-            if(howMed.nombre == howCita.nombre_dr){ //si el nombre del medico coincide con el de la cita
-                c_citas[howMed.especialidad]++;
-                break;
-                //conteo por especialidad
+            // Inicializar mapa si es primera vez
+            if (conteoPrioridad.find(responsable) == conteoPrioridad.end()) {
+                conteoPrioridad[responsable] = {0, 0, 0};  // [ALTA, MEDIA, BAJA]
+                totalTareasPorResponsable[responsable] = 0;
             }
+
+            // Incrementar contador según prioridad
+            if (prioridad == "ALTA") {
+                conteoPrioridad[responsable][0]++;
+            } else if (prioridad == "MEDIA") {
+                conteoPrioridad[responsable][1]++;
+            } else if (prioridad == "BAJA") {
+                conteoPrioridad[responsable][2]++;
+            }
+
+            totalTareasPorResponsable[responsable]++;
         }
     }
 
-    //contar pacientes por especialidad de medicos quienes atiende
-    unordered_map<string, string> med_especial; //
-    unordered_map<string, set<string>> patient_especial; //
-    //medico como llave,especialidad como valor
-    for (const auto& medico : medicos) {
-        med_especial[medico.nombre] = medico.especialidad;
-        //registra el nombre del medico con su valor de especialidad
-        //para cada nombre del medico en el map, se le reconocera su especialidad
+    int maxTareas = 0;
+    for (const auto& [responsable, total] : totalTareasPorResponsable) {
+        if (total > maxTareas) maxTareas = total;
     }
 
-    for (const auto& cita : cita) {
-        string especialidad = med_especial[cita.nombre_dr]; //trae la especialidad segun el nombre del doctor
-        patient_especial[especialidad].insert(cita.nombre_p); //segun la especialidad la inserta a patient_especial
-    }
+    // Iterar sobre los responsables (ordenados por set)
+    for (const string& responsable : responsables) {
+        int total = totalTareasPorResponsable[responsable];
+        int alta = conteoPrioridad[responsable][0];
+        int media = conteoPrioridad[responsable][1];
+        int baja = conteoPrioridad[responsable][2];
+        QString nivelCarga;
+        QString colorCarga;
+        double porcentaje = (maxTareas > 0) ? (double)total / maxTareas * 100 : 0;
 
-    // Contar
-    for (const auto& [esp, pacientesSet] : patient_especial) { //pivotes de paciente especial
-        c_pacientes[esp] = pacientesSet.size();
-    }
-
-
-
-    foreach (const auto& esp, especialidades) {        html += "        <tr>\n";
-        string ocupaciones;
-        int numMeds = c_medicos[esp];//segun la especialidad muestra el numero que fue aumentando
-        int numCitas = c_citas[esp]; //segun la especialidad muestra el numero que fue aumentando
-        int numPac = c_pacientes[esp]; //segun la especialidad muestra el numero que fue aumentando
-
-        //Nivel de ocupacion por especialidad
-        double occ = (numMeds > 0) ?
-                         static_cast<double>(numCitas) / numMeds : 0;
-
-        if(occ <= 2){
-            ocupaciones = "BAJA";
-        }else if(occ <= 5){
-            ocupaciones = "MEDIANA";
-        }else if(occ <= 7){
-            ocupaciones = "ALTA";
-        }else if(occ <= 10){
-            ocupaciones = "SATURADO";
+        if (total == 0) {
+            nivelCarga = "Sin tareas";
+            colorCarga = "gray";
+        } else if (total <= 2) {
+            nivelCarga = "BAJA";
+            colorCarga = "#2ed573";
+        } else if (total <= 5) {
+            nivelCarga = "MEDIA";
+            colorCarga = "#ffa502";
+        } else if (total <= 8) {
+            nivelCarga = "ALTA";
+            colorCarga = "#ff7f00";
+        } else {
+            nivelCarga = "SATURADA";
+            colorCarga = "#ff0015";
         }
 
 
-        html += "        <td>" + QString::fromStdString(esp) + "</td>\n"; //NOMBRE
-        html += "        <td>" + QString::number(numMeds) + "</td>\n"; //NOMBRE
-        html += "        <td>" + QString::number(numCitas) + "</td>\n"; //NOMBRE
-        html += "        <td>" + QString::number(numPac) + "</td>\n"; //NOMBRE
-        html += "        <td>" + QString::fromStdString(ocupaciones) + "</td>\n"; //NOMBRE
-        html += "        </tr>\n";
-
-
+        html += "<td>" + QString::fromStdString(responsable) + "<td>\n"; //Emcargado
+        html += "<td>" + QString::number(total) + "</td>\n"; //total asignado
+        html += "<td>" + QString::number(baja) + "</td>\n"; //bajo
+        html += "<td>" + QString::number(media) + "</td>\n"; //media
+        html += "<td>" + QString::number(alta) + "</td>\n";//alta
+        html += "<td>" + nivelCarga + " (total: " + QString::number(total) + ")</td>\n";
+        html += "</tr>\n";
     }
 
-
-
-    //RESUMIR HTML
     html += R"(
             </tbody>
         </table>
@@ -1353,105 +885,44 @@ QString MainWindow::hospitalStats(){ //GENERACION DE HTML GENERAL HOSPITAL
     </div>
 </body>
 </html>
+
+
     )";
 
     return html;
-
-
-}
-
-void MainWindow::abrirReporte4() { // REPORTE GENERAL
-
-    //GENERAR REPORTE PACIENTES
-    //REPORTE DE CITAS
-
-    //GENERAR REPORE
-    qInfo() << "Generando reporte General Hospital + Archivo.dot ";
-
-
-    if (archivoActual.isEmpty()) {
-        qWarning() << "ERROR: No hay archivo cargado";
-        QMessageBox::warning(this, "Error", "Primero carga un archivo .med");
-        return;
-    }
-
-    if(!archivoActual.isEmpty()){
-
-        QString ruta = QFileInfo(archivoActual).absolutePath();
-        QString dotPath = ruta + "/jerarquiaHospital.dot"; //Ruta donde se almacenara el archivo.dot
-        QString RePath = ruta + "/reporte_g_hospital.html"; //Ruta donde se almacenara reporte de Hospital
-
-        QDir dir(ruta);
-        if(!dir.exists()){
-            QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
-            return; //defunde la fucnbion
-        }
-
-        QString dotContents = dotFile();
-        QString htmlContents = hospitalStats(); //genera el reporte con datos
-        QFile archivo(RePath); //guarda el archivo
-        QFile archivoDot(dotPath); //guarda archivo dot
-        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream out(&archivo);
-            out << htmlContents;
-            archivo.close();
-            //POPUP
-            QMessageBox::information(this, "Historial Pacientes!","Reporte de Historial de Pacientes Generado correctamente correctamente.");
-
-        }else{
-            QMessageBox::information(this, "ERROR, Historial Pacientes!","Ocurrio un error al GENERAR el archivo");
-        }
-
-        if(archivoDot.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream out(&archivoDot);
-            out << dotContents;
-            archivoDot.close();
-            //POPUP
-            QMessageBox::information(this, "Jerarquia de hospital!","Reporte de Jerarquia de hospital Generado correctamente correctamente.");
-
-        }else{
-            QMessageBox::information(this, "ERROR, Jerarquia de hospital!","Ocurrio un error al GENERAR el archivo de \n Jerarquia de hospital ");
-        }
-
-
-
-
-
-    }
-
 }
 
 
-QString MainWindow::lexicalErrors(){ //GENERACION DE HTML GENERAL HOSPITAL
-
-
+QString MainWindow::lexicalErrors(){
     QString html = R"(
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Errores Lexicos</title>
+    <title>Reporte de Errores Lexicos y Sintacticos</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 40px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #373737;
+            color: #ffffff;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
+            background-color: rgb(15, 15, 15);
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 30px;
         }
         h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
+            color: #ba6824;
+            border-bottom: 3px solid #ff7b00da;
             padding-bottom: 10px;
         }
+        h2{  color: #e1af52; border-bottom: 3px solid #ff7b00da; padding-bottom: 10px; }
+
         .fecha {
             color: #7f8c8d;
             text-align: right;
@@ -1463,7 +934,7 @@ QString MainWindow::lexicalErrors(){ //GENERACION DE HTML GENERAL HOSPITAL
             margin-top: 20px;
         }
         th {
-            background-color: #611111;
+            background-color: #e87714;
             color: white;
             padding: 12px;
             text-align: left;
@@ -1473,36 +944,32 @@ QString MainWindow::lexicalErrors(){ //GENERACION DE HTML GENERAL HOSPITAL
             color: white;
             padding: 12px;
             text-align: left;
-
         }
-
-
         td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
         }
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #41362c;
         }
         .total {
             margin-top: 20px;
             font-weight: bold;
-            color: #2c3e50;
+            color: #50402c;
         }
+
     </style>
 </head>
 <body>
+    <h2>Errores encontrados durante el analisis de los archivos .task</h2>
     <div class="container">
         <h1>ERRORES LEXICOS</h1>
         <div class="fecha">
             Fecha de generación: )" + QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss") + R"(
         </div>
-
-
         <table>
             <thead>
                 <tr>
-
                     <th>No.</th>
                     <th>Lexema Intro.</th>
                     <th>Error</th>
@@ -1531,8 +998,33 @@ QString MainWindow::lexicalErrors(){ //GENERACION DE HTML GENERAL HOSPITAL
     html += R"(
             </tbody>
         </table>
-
     </div>
+    <div class="container">
+        <h1>ERRORES SINTACTICOS</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Descripcion</th>
+
+                </tr>
+            </thead>
+        <tbody>
+    )";
+    //Iteracion para Errores lexicos
+    for(int e =0; e< errSintax.size() ; e++ ){
+        html += "            <td>" + QString::number(e + 1) + "</td>\n"; //NUMERO
+        html += "            <td>" + QString::fromStdString(errSintax[e].descripcion) + "</td>\n";
+
+        html += "        </tr>\n";
+
+    }
+
+    html += R"(
+            </tbody>
+        </table>
+    </div>
+
 </body>
 </html>
     )";
@@ -1542,48 +1034,7 @@ QString MainWindow::lexicalErrors(){ //GENERACION DE HTML GENERAL HOSPITAL
 
 }
 
-void MainWindow::abrirReporte5() { // REPORTE GENERAL
 
-    //GENERAR REPORTE PACIENTES
-    //REPORTE DE CITAS
-
-    //GENERAR CITAS
-    qInfo() << "Generando reporte de TOKENS";
-
-    if (archivoActual.isEmpty()) {
-        qWarning() << "ERROR: No hay archivo cargado";
-        QMessageBox::warning(this, "Error", "Primero carga un archivo .med");
-        return;
-    }
-
-    if(!archivoActual.isEmpty()){
-        QString ruta = QFileInfo(archivoActual).absolutePath();
-        QString path = ruta + "/reporte_errorLexico.html"; //Ruta donde se almacenara
-
-        QDir dir(ruta);
-        if(!dir.exists()){
-            QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
-            return; //defunde la fucnbion
-        }
-
-
-        QString htmlContents = lexicalErrors(); //genera el reporte con datos
-        QFile archivo(path); //guarda el archivo
-        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
-            QTextStream out(&archivo);
-            out << htmlContents;
-            archivo.close();
-            //POPUP
-            QMessageBox::information(this, "Historial Pacientes!","Reporte de Historial de Pacientes Generado correctamente correctamente.");
-
-        }else{
-            QMessageBox::information(this, "ERROR, Historial Pacientes!","Ocurrio un error al GENERAR el archivo");
-        }
-    }
-
-}
-
-*/
 
 
 

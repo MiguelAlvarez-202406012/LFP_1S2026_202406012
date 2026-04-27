@@ -11,6 +11,7 @@ TABLERO "Proyecto LFP" {
         tarea: "Diseñar GUI" [prioridad: MEDIA, responsable: "Ana",
         fecha_limite: 2026-05-05],
         };
+        ,GMK , SOS
     COLUMNA "Completado" {
         tarea: "Investigar Qt" [prioridad: BAJA, responsable: "Pedro",
         fecha_limite: 2026-04-20],
