@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1095</width>
-    <height>748</height>
+    <height>536</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,10 +18,13 @@
     <property name="geometry">
      <rect>
       <x>170</x>
-      <y>60</y>
+      <y>80</y>
       <width>141</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: #ff7b00;</string>
     </property>
     <property name="text">
      <string>Cargar Archvio</string>
@@ -31,10 +34,16 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>60</y>
+      <y>80</y>
       <width>141</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: #ff7b00;
+QpushButton::disabled{
+	color: #2ed5731a;
+}</string>
     </property>
     <property name="text">
      <string>Analizar</string>
@@ -44,10 +53,13 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>100</y>
+      <y>120</y>
       <width>311</width>
-      <height>621</height>
+      <height>391</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: #ff7b00;</string>
     </property>
     <property name="title">
      <string>CodigoFuente</string>
@@ -61,8 +73,11 @@
        <x>10</x>
        <y>30</y>
        <width>291</width>
-       <height>581</height>
+       <height>351</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(50, 50, 50); color:#FFFFFF</string>
      </property>
     </widget>
    </widget>
@@ -70,7 +85,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>20</y>
+      <y>40</y>
       <width>121</width>
       <height>31</height>
      </rect>
@@ -83,7 +98,7 @@
     <property name="geometry">
      <rect>
       <x>140</x>
-      <y>30</y>
+      <y>50</y>
       <width>191</width>
       <height>16</height>
      </rect>
@@ -92,22 +107,28 @@
      <enum>QFrame::Shape::Box</enum>
     </property>
     <property name="text">
-     <string>SIN CARGA</string>
+     <string>No hay archivos cargados...</string>
     </property>
    </widget>
    <widget class="QTabWidget" name="tabW_tok">
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>120</y>
+      <y>170</y>
       <width>741</width>
       <height>341</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: #ff7b00;</string>
     </property>
     <property name="currentIndex">
      <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <attribute name="title">
       <string>Tokens</string>
      </attribute>
@@ -120,6 +141,9 @@
         <height>291</height>
        </rect>
       </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <property name="title">
        <string>TABLA DE TOKENS</string>
       </property>
@@ -131,6 +155,9 @@
          <width>701</width>
          <height>251</height>
         </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(50, 50, 50);</string>
        </property>
        <property name="editTriggers">
         <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
@@ -169,6 +196,9 @@
          <height>251</height>
         </rect>
        </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(50, 50, 50);</string>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
        </property>
@@ -206,6 +236,9 @@
          <height>251</height>
         </rect>
        </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(50, 50, 50);</string>
+       </property>
       </widget>
      </widget>
     </widget>
@@ -213,11 +246,14 @@
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>0</y>
-      <width>281</width>
+      <x>340</x>
+      <y>50</y>
+      <width>741</width>
       <height>111</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: #ff7b00;</string>
     </property>
     <property name="title">
      <string>Generar Reportes</string>
@@ -227,9 +263,12 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>81</width>
+       <width>231</width>
        <height>71</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(50, 50, 50);</string>
      </property>
      <property name="text">
       <string>KANBAN</string>
@@ -241,11 +280,14 @@
     <widget class="QPushButton" name="btnReporte2">
      <property name="geometry">
       <rect>
-       <x>100</x>
+       <x>250</x>
        <y>30</y>
-       <width>81</width>
+       <width>241</width>
        <height>71</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(50, 50, 50);</string>
      </property>
      <property name="text">
       <string>ENCARGOS</string>
@@ -254,16 +296,39 @@
     <widget class="QPushButton" name="btnReporte5">
      <property name="geometry">
       <rect>
-       <x>190</x>
+       <x>500</x>
        <y>30</y>
-       <width>81</width>
+       <width>231</width>
        <height>71</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(50, 50, 50);</string>
      </property>
      <property name="text">
       <string>ERRORES</string>
      </property>
     </widget>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>0</y>
+      <width>381</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color:rgb(252, 166, 91);
+font-family: 'Arial';
+font-size: 35px
+
+</string>
+    </property>
+    <property name="text">
+     <string>KANBAN TASKSCRIPT</string>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
