@@ -1,0 +1,5 @@
+TABLERO "Numeros" {
+    123COLUMNA "Esto es inválido" {
+        tarea: "Tarea" [prioridad: ALTA, responsable: "Admin", fecha_limite: 2025-08-01];
+    };
+};

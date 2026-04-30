@@ -47,9 +47,9 @@ void LexicalAnalyzer::registrarError_L(const string& lex,  const string& tipo,co
     errores_L.push_back({ lex, tipo, desc, linea, columna });
 }
 //al detectar un error Sintax
-void LexicalAnalyzer::registrarError_S(const string& desc) {
+void LexicalAnalyzer::registrarError_S(const string& desc , int linea, int columna) {
     //llama al vector de errores y mete el error lexico
-    errores_S.push_back({ desc });
+    errores_S.push_back({ desc , linea, columna });
 }
 
 
@@ -78,6 +78,7 @@ Token LexicalAnalyzer::siguienteToken() { //PARA SIGUENTE TOKEN
     if (c == '[') { avanzar(); return { TokenType::CORCH_ABRE, "[", linIni, colIni }; }
     if (c == ']') { avanzar(); return { TokenType::CORCH_CIERRA, "]", linIni, colIni }; }
     if (c == ',') { avanzar(); return { TokenType::COMA, "]", linIni, colIni }; }
+
     if (c == '"') { return leerString(); }  // Nueva función para strings
 
     //reconocimiento de numeros
@@ -91,10 +92,12 @@ Token LexicalAnalyzer::siguienteToken() { //PARA SIGUENTE TOKEN
         return leerPalabraReservada();
 
     // Carácter no reconocido → error léxico
+
+
     std::string lex(1, c);
     avanzar();
     registrarError_L(lex, "Carácter ilegal",
-                   "El carácter '" + lex + "' no pertenece al alfabeto de MedLang.");
+                   "El carácter '" + lex + "' no pertenece al alfabeto de Task.");
     return { TokenType::DESCONOCIDO, lex, linIni, colIni };
 }
 
@@ -186,7 +189,7 @@ Token LexicalAnalyzer::leerString(){
     if (actual() == '"') {
         avanzar(); // Saltar la comilla final
         return { TokenType::STRING, lexema, linIn, colIn };
-    } else {
+    }else {
         registrarError_L(lexema, "String mal formado", "Falta comilla de cierre");
         return { TokenType::DESCONOCIDO, lexema, linIn, colIn };
     }
@@ -260,7 +263,7 @@ vector<Token> LexicalAnalyzer::tokenize() {
     try {
         parsePrograma();//Inicio de parseo
         if(tokenActual < (int)tokens.size()){
-            registrarError_S("ERROR,TOKENS SIN PROCESAR");
+            registrarError_S("ERROR,TOKENS SIN PROCESAR",linea,columna);
         }
 
     } catch (exception e) {
@@ -291,9 +294,9 @@ bool LexicalAnalyzer::isValid(){
 Token LexicalAnalyzer::Consume(TokenType await){
     //SI EL TOKEN ACTUAL ESTA UBICADO FUERA DE RANGO
     if(tokenActual >= (int)tokens.size()){
-        registrarError_S("ERROR,TOKENS SIN PROCESAR");
+        registrarError_S("ERROR,TOKENS SIN PROCESAR",linea,columna);
         //retorna a la caja de tokens
-        return Token{TokenType::DESCONOCIDO,"?",0,0};
+        return Token{TokenType::DESCONOCIDO,"?",linea,columna};
     }
 
     Token t = tokens[tokenActual]; //Token actual lo tomara
@@ -301,7 +304,7 @@ Token LexicalAnalyzer::Consume(TokenType await){
         tokenActual++;
         return t; //RETORNA TOKEN ACTUAL SUMADO
     }else{
-        registrarError_S(tokenTypeToString(await) + ", Token Diferente al esperado");
+        registrarError_S(tokenTypeToString(await) + ", Token Diferente al esperado",t.linea,t.columna);
         return Token{TokenType::DESCONOCIDO,"",0,0};
     }
 

@@ -1,0 +1,5 @@
+TABLERO "Minimo" {
+    COLUMNA "Unica" {
+        tarea: "Tarea Unica" [prioridad: BAJA, responsable: "Admin", fecha_limite: 2025-01-01];
+    };
+};

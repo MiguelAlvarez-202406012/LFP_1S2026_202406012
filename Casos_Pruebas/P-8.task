@@ -1,0 +1,5 @@
+TABLERO "Error Sintáctico" {
+    COLUMNA "SinPuntoComa" {
+        tarea: "Tarea A" [prioridad: ALTA, responsable: "Admin", fecha_limite: 2025-10-01]
+    }
+};

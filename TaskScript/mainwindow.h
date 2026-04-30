@@ -45,15 +45,6 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
     Ui::MainWindow *ui; //Puntero a la interfaz generada (NO MOVER)
 
     //FUNCIONES DE RETORNO
-    // RETORNO DE VALORES
-    int returnMeds();
-    int returnPacient();
-    int returnCita();
-    int returnDiag();
-    double returnProm();
-
-    string mayorPreS(); //OBSOLETE
-
     //vectores que utilizara
     vector<Columna> column;
     vector<ErrorLexico> errLexico;
@@ -65,24 +56,11 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
     int returnTarea(); //retorno de tareas
     //
     QString archivoActual;
-    //OBSOLETE
-    QString clientHist(); //HISTORIAL DE PACIENTES
-    QString reportMed(); // EL MEDICO Y SU TIPO DE CARGA
-    QString citasReport(); //REPORTE DE CITAS Y POSIBLES CONFLICTOS
-    QString hospitalStats(); // REPORTE GENERAL (EASIEST)
-    /*
-
-    QString kanban();
-    QString reporteCarga();
-    */
-
-
-
     //NEW REPORTES
     QString todo_Reporte(); //REPORTE DE TAREAS
     QString carga_per_user(); //REPORTE DE CARGA POR USUARIO
     QString lexicalErrors(); // REPORTE DE ERRORES
-    QString dotFile(); //ARBOL SINTAXIS
+    QString dotFile(); //ARBOL SINTAXIS .DOT
     QString clearCorrupted(const string& texto); //limpiar comillas pedorras
 
     void setDisable();

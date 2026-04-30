@@ -36,11 +36,12 @@ MainWindow::MainWindow(QWidget *parent) //CONSTRUCTOR DE UI (SE PUEDEN EJECUTRA 
     , ui(new Ui::MainWindow) //Inicia UI
 {
     ui->setupUi(this);
-    setWindowTitle("TaskScript Reader 0.1.0");
+    setWindowTitle("TaskScript Reader 0.2.0");
     conectarUI();
     setupTablaErrores();
     setupTablaTokens();
     setupTablaErroresS();
+    this->setFixedSize(1095 , 536);
 }
 
 
@@ -81,8 +82,10 @@ void MainWindow::setupTablaErrores(){
     ui->tbl_errors->verticalHeader()->setVisible(false);
 }
 void MainWindow::setupTablaErroresS(){
-    ui->tbl_sError->setColumnCount(1);
-    ui->tbl_sError->setHorizontalHeaderLabels({"Tipo de Error"});
+    ui->tbl_sError->setColumnCount(3);
+    ui->tbl_sError->setHorizontalHeaderLabels({"linea","columna","Tipo de Error"});
+    ui->tbl_sError->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->tbl_sError->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     ui->tbl_sError->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
     ui->tbl_sError->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tbl_sError->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -174,7 +177,9 @@ void MainWindow::analizarArchivo() { //ALTERACION
     for(int i = 0 ; i < (int)lexer.errores_S.size();i++){
         auto& e = lexer.errores_S[i];
         ui->tbl_sError->insertRow(i);
-        ui->tbl_sError->setItem(i,0,new QTableWidgetItem(QString::fromStdString(e.descripcion)));
+        ui->tbl_sError->setItem(i,0,new QTableWidgetItem(QString::number(e.linea)));
+        ui->tbl_sError->setItem(i,1,new QTableWidgetItem(QString::number(e.columna)));
+        ui->tbl_sError->setItem(i,2,new QTableWidgetItem(QString::fromStdString(e.descripcion)));
     }
 
     for (auto *btn : {ui->btnReporte1, ui->btnReporte2, ui->btnReporte5})
@@ -183,10 +188,11 @@ void MainWindow::analizarArchivo() { //ALTERACION
 
     int nTokens = tokens.size();
     int nErrores = lexer.errores_L.size();
-    statusBar()->showMessage(QString("Analisis completado — %1 tokens, %2 errores léxicos.")
-                                 .arg(nTokens).arg(nErrores));
+    int sErrores = lexer.errores_S.size();
+    statusBar()->showMessage(QString("Analisis completado — %1 tokens, %2 errores léxicos, %3 errores Sintacticos")
+                                 .arg(nTokens).arg(nErrores).arg(sErrores));
 
-    QMessageBox::information(this, "Lectura compeltada!","Lectura de archivo .med completado!");
+    QMessageBox::information(this, "Lectura compeltada!","Lectura de archivo .task completado!");
 }
 
 QString MainWindow::clearCorrupted(const string& texto){
@@ -766,6 +772,7 @@ QString MainWindow::carga_per_user(){
         td, th {
             padding: 10px;
             border-bottom: 1px solid #ddd;
+            text-align: center;
 
         }
         tr:hover {
@@ -869,13 +876,18 @@ QString MainWindow::carga_per_user(){
         }
 
 
+
+        if(responsable == "" || responsable.empty()){
+        html += "<td>" + QString::fromStdString("Sin RESPONSABLE!") + "<td>\n"; //Emcargado
+        }else{
         html += "<td>" + QString::fromStdString(responsable) + "<td>\n"; //Emcargado
+        }
         html += "<td>" + QString::number(total) + "</td>\n"; //total asignado
         html += "<td>" + QString::number(baja) + "</td>\n"; //bajo
         html += "<td>" + QString::number(media) + "</td>\n"; //media
         html += "<td>" + QString::number(alta) + "</td>\n";//alta
         html += "<td>" + nivelCarga + " (total: " + QString::number(total) + ")</td>\n";
-        html += "</tr>\n";
+        html += "</tr>";
     }
 
     html += R"(

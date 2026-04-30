@@ -1,0 +1,1 @@
+TABLERO "Compacto" { COLUMNA "Unica" { tarea: "Simple" [prioridad: ALTA, responsable: "Yo", fecha_limite: 2025-05-01]; }; };

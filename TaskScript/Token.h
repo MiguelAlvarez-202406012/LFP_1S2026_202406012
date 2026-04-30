@@ -44,10 +44,6 @@ enum class TokenType { //TODOS LOS TIPOS DE TOKENS
     prioridades,
     Fecha,
     delimitador,
-
-
-
-
 };
 
 // Convierte el enum a string legible para la tabla y retorna EL TIPO DE STRING

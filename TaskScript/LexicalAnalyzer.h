@@ -31,6 +31,8 @@ struct ErrorLexico {
 
 struct ErrorSintactico {
     string descripcion;
+    int linea;
+    int columna;
 };
 
 
@@ -40,17 +42,6 @@ class LexicalAnalyzer {
 public:
 
     explicit LexicalAnalyzer(const string& fuente); //Constructor OBLICATORIO
-    //Constante para que no cambie
-    //Contenedores ALMACENARAN LOS DATOS AL LEER EL DOCUMENTO
-    //LUEGO SE DECLARAN OTROS VECTORES PARA MAIN WINDOW CON EL MISMO VALOR
-    /*
-
-    vector<Medic> medStorage; //
-    vector<Citas> citStorage; //
-    vector<Patient> patStorage; //
-    vector<Diagnostic> diagStorage; //
-    */
-
     vector<Columna> columnStorage; //almacenar tareas
     // Retorna todos los tokens del archivo
     vector<Token> tokenize(); //declara vector para tokenizacion y mostrar en tablas
@@ -84,7 +75,7 @@ private:
     Token currentToken() const;
 
     void  registrarError_L(const string& lexema,const string& tipo,const string& desc);
-    void  registrarError_S(const string& desc);
+    void  registrarError_S(const string& desc , int linea, int columna);
 
     //parseo
     void parsePrograma();

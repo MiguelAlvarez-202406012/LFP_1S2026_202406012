@@ -1,0 +1,5 @@
+TABLERO "@rchivo Inválido" {
+    COLUMNA "Normal" {
+        tarea: "Tarea $pecial" [prioridad: ALTA, responsable: "Yo#", fecha_limite: 2025-07-01];
+    };
+};

@@ -1,0 +1,6 @@
+TABLERO "Mixto" {
+    COLUMNA "Errores" {
+        tarea: "Tarea con #" [prioridad: ALTA#, responsable: "Admin", fecha_limite: 2025-12-01],
+        tarea: "Falta cierre" [prioridad: BAJA, responsable: "Yo", fecha_limite: 2025-12-15],
+        ;
+};
