@@ -36,7 +36,8 @@ MainWindow::MainWindow(QWidget *parent) //CONSTRUCTOR DE UI (SE PUEDEN EJECUTRA 
     , ui(new Ui::MainWindow) //Inicia UI
 {
     ui->setupUi(this);
-    setWindowTitle("TaskScript Reader 0.2.0");
+    setWindowTitle("TaskScript Reader 0.2.3");
+
     conectarUI();
     setupTablaErrores();
     setupTablaTokens();
@@ -300,33 +301,49 @@ void MainWindow::abrirReporte5() { //REPORTE DE ERRORES LEXICOS + ARBOL
         if(!archivoActual.isEmpty()){
             QString ruta = QFileInfo(archivoActual).absolutePath();
             QString path = ruta + "/r_errors.html"; //Ruta donde se almacenara
+            QString path_dot = ruta + "/L_Tree.dot";
 
-            QDir dir(ruta);
+            QDir dir(ruta); //Si la ruta no existe
             if(!dir.exists()){
                 QMessageBox::critical(this, "Error", "La ruta: " + ruta + " No existe");
                 return; //defunde la fucnbion
             }
             QString htmlContents = lexicalErrors(); //genera el reporte con datos
+            QString dotTree = dotFile();
+
             QFile archivo(path); //guarda el archivo
             if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
                 QTextStream out(&archivo);
                 out << htmlContents;
                 archivo.close();
                 //POPUP
-                QMessageBox::information(this, "Citas!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
+                QMessageBox::information(this, "Errores Lexicos y sintacticos!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
                 manyFilesErrors++;
                 itExistsErrors = true;
+                QFile archivo_dot(path_dot);
+                if(archivo_dot.open(QIODevice::WriteOnly | QIODevice::Text)){
+                    QTextStream out(&archivo_dot);
+                    out << dotFile();
+                    archivo.close();
+                    QMessageBox::information(this, "Arbol Sintactico!!","Se genero Arbol Correctamente");
+                }else{
+                    QMessageBox::information(this, "Arbol Sintactico!!","Ocurrio un error al generar el arbol sintactico");
+                }
+
+
             }else{
                 QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
             }
+
         }
 
 
     }else{
-        QMessageBox::information(this, "Advertencia, Archivo numero: " + QString::number(manyFilesErrors),"El archivo que intenta crear ya existe, Se generarar otro archivo nuevo.");
+        QMessageBox::information(this, "Advertencia, Archivo numero: " + QString::number(manyFilesErrors),"El archivo que intenta crear ya existe, Se generarar otro archivo nuevo. \n El arbol sintactico no cambiara :)");
         if(!archivoActual.isEmpty()){
             QString ruta = QFileInfo(archivoActual).absolutePath();
             QString path = ruta + "/r_errors_"  + QString::number(manyFilesErrors) +  ".html"; //Ruta donde se almacenara
+            QString path_dot = ruta + "/L_Tree.dot";
 
             QDir dir(ruta);
             if(!dir.exists()){
@@ -335,6 +352,7 @@ void MainWindow::abrirReporte5() { //REPORTE DE ERRORES LEXICOS + ARBOL
             }
 
             QString htmlContents = lexicalErrors(); //genera el reporte con datos
+             QString dotTree = dotFile();
             QFile archivo(path); //guarda el archivo
             if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)){
                 QTextStream out(&archivo);
@@ -343,6 +361,15 @@ void MainWindow::abrirReporte5() { //REPORTE DE ERRORES LEXICOS + ARBOL
                 //POPUP
                 QMessageBox::information(this, "Archivo Generado!","Reporte de Errores Lexicos y Sintacticos generado correctamente.");
                 manyFilesErrors++;
+                QFile archivo_dot(path_dot);
+                if(archivo_dot.open(QIODevice::WriteOnly | QIODevice::Text)){
+                    QTextStream out(&archivo_dot);
+                    out << dotFile();
+                    archivo.close();
+                    QMessageBox::information(this, "Arbol Sintactico!!","Se genero Arbol Correctamente");
+                }else{
+                    QMessageBox::information(this, "Arbol Sintactico!!","Ocurrio un error al generar el arbol sintactico");
+                }
             }else{
                 QMessageBox::information(this, "ERROR, Reporte E Lexicos!","Ocurrio un error al GENERAR el archivo");
             }
@@ -352,6 +379,114 @@ void MainWindow::abrirReporte5() { //REPORTE DE ERRORES LEXICOS + ARBOL
 
 
     //Generar Reporte de Errores lexicos
+}
+//GENERAR ARBOL
+
+QString MainWindow::dotFile(){ //genera arbol
+    QString dot = "digraph SyntaxTree {\n";
+    dot += "    // Configuración global del gráfico\n";
+    dot += "    rankdir=TB;\n";           // Top to Bottom (vertical)
+    dot += "    splines=ortho;\n";        // Líneas ortogonales
+    dot += "    nodesep=0.5;\n";
+    dot += "    ranksep=0.8;\n";
+    dot += "    node [fontname=\"Arial\", fontsize=10, shape=box, style=filled];\n";
+    dot += "    edge [fontname=\"Arial\", fontsize=8];\n\n";
+
+    // ========== NODO RAIZ = TABLERO ==========
+    dot += "    // NODO RAIZ\n";
+    dot += "    Tablero [label=\"TABLERO\\n" +
+           QFileInfo(archivoActual).baseName() + "\", fillcolor=\"lightgreen\"];\n\n";
+
+    // ========== CREAR NODOS Y RELACIONES ==========
+    int nodeCounter = 0;
+
+    // Nodo para agrupar columnas
+    QString columnasNode = "Columnas_" + QString::number(nodeCounter++);
+    dot += "    " + columnasNode + " [label=\"COLUMNAS\", fillcolor=\"lightblue\", shape=ellipse];\n";
+    dot += "    Tablero -> " + columnasNode + " [label=\"contiene\"];\n\n";
+
+    // Recorrer cada columna
+    for (int col = 0; col < (int)column.size(); col++) {
+        QString colNode = "Columna_" + QString::number(col) + "_" + QString::number(nodeCounter++);
+        QString colName = QString::fromStdString(column[col].Columna);
+
+        // Limpiar caracteres especiales para DOT
+        colName.replace("\"", "\\\"");
+        colName.replace("\n", " ");
+
+        // Nodo columna
+        dot += "    " + colNode + " [label=\"COLUMNA\\n" + colName +
+               "\", fillcolor=\"lightyellow\", shape=box];\n";
+        dot += "    " + columnasNode + " -> " + colNode + " [label=\"columna\"];\n";
+
+        // Nodo para agrupar tareas de esta columna
+        QString tareasNode = "Tareas_" + QString::number(col) + "_" + QString::number(nodeCounter++);
+        dot += "    " + tareasNode + " [label=\"TAREAS\", fillcolor=\"lightgray\", shape=ellipse];\n";
+        dot += "    " + colNode + " -> " + tareasNode + " [label=\"contiene\"];\n";
+
+        // Recorrer tareas de la columna
+        for (int t = 0; t < (int)column[col].tarea_column.size(); t++) {
+            QString tareaNode = "Tarea_" + QString::number(col) + "_" + QString::number(t) + "_" + QString::number(nodeCounter++);
+
+            // Obtener datos de la tarea
+            QString tareaNombre = QString::fromStdString(column[col].tarea_column[t].nombre_tarea);
+            QString prioridad = QString::fromStdString(column[col].tarea_column[t].nivel_prioridad);
+            QString responsable = QString::fromStdString(column[col].tarea_column[t].responsable);
+            QString fecha = QString::fromStdString(column[col].tarea_column[t].fecha_limit);
+
+            // Limpiar caracteres especiales
+            tareaNombre.replace("\"", "\\\"");
+            tareaNombre.replace("\n", " ");
+            responsable.replace("\"", "\\\"");
+
+            // Color según prioridad
+            QString color;
+            if (prioridad == "ALTA") color = "#ffcccc";
+            else if (prioridad == "MEDIA") color = "#ffffcc";
+            else if (prioridad == "BAJA") color = "#ccffcc";
+            else color = "#eeeeee";
+
+            // Nodo tarea
+            dot += "    " + tareaNode + " [label=\"TAREA\\n" + tareaNombre +
+                   "\", fillcolor=\"" + color + "\", shape=box];\n";
+            dot += "    " + tareasNode + " -> " + tareaNode + " [label=\"tarea\"];\n";
+
+            // Subnodos para atributos de la tarea
+            QString attrNode = "Atributos_" + QString::number(col) + "_" + QString::number(t) + "_" + QString::number(nodeCounter++);
+            dot += "    " + attrNode + " [label=\"ATRIBUTOS\", fillcolor=\"lightpink\", shape=ellipse];\n";
+            dot += "    " + tareaNode + " -> " + attrNode + " [label=\"tiene\"];\n";
+
+            // Prioridad
+            if (!prioridad.isEmpty()) {
+                QString prioridadNode = "Prioridad_" + QString::number(col) + "_" + QString::number(t) + "_" + QString::number(nodeCounter++);
+                dot += "    " + prioridadNode + " [label=\"PRIORIDAD\\n" + prioridad +
+                       "\", fillcolor=\"#ffe0e0\", shape=note];\n";
+                dot += "    " + attrNode + " -> " + prioridadNode + " [label=\"prioridad\"];\n";
+            }
+
+            // Responsable
+            if (!responsable.isEmpty()) {
+                QString respNode = "Responsable_" + QString::number(col) + "_" + QString::number(t) + "_" + QString::number(nodeCounter++);
+                dot += "    " + respNode + " [label=\"RESPONSABLE\\n" + responsable +
+                       "\", fillcolor=\"#e0ffe0\", shape=note];\n";
+                dot += "    " + attrNode + " -> " + respNode + " [label=\"responsable\"];\n";
+            }
+
+            // Fecha límite
+            if (!fecha.isEmpty()) {
+                QString fechaNode = "Fecha_" + QString::number(col) + "_" + QString::number(t) + "_" + QString::number(nodeCounter++);
+                dot += "    " + fechaNode + " [label=\"FECHA LÍMITE\\n" + fecha +
+                       "\", fillcolor=\"#e0e0ff\", shape=note];\n";
+                dot += "    " + attrNode + " -> " + fechaNode + " [label=\"fecha_limite\"];\n";
+            }
+        }
+        dot += "\n";
+    }
+
+    dot += "}\n";
+
+    return dot;
+
 }
 
 

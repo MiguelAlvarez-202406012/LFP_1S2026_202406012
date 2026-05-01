@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>img/icon.png</normaloff>img/icon.png</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(50, 50, 50);</string>
   </property>
@@ -309,7 +313,7 @@ QpushButton::disabled{
       <string notr="true">background-color: rgb(50, 50, 50);</string>
      </property>
      <property name="text">
-      <string>ERRORES</string>
+      <string>ERRORES LEXICOS Y SINTACTICOS</string>
      </property>
     </widget>
    </widget>
