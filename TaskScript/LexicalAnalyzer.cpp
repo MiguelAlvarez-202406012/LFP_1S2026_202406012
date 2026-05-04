@@ -8,6 +8,7 @@
 //UTILIZACION DEL HEADER LexicalAnalyzer
 //clase para el analizador lexico y utiliza el header de Lexicalanalyzer para decalrar las fucnoiones
 // De que Clase ::
+
 using namespace std;
 // PUNTERO
 //DE LEXICALANALYZER HEADER LA FUNCION
@@ -91,7 +92,7 @@ Token LexicalAnalyzer::siguienteToken() { //PARA SIGUENTE TOKEN
     if (std::isalpha((unsigned char)c) || c == '_') //SI ES PALABRA RESERVADA O ID
         return leerPalabraReservada();
 
-    // Carácter no reconocido → error léxico
+    // Carácter no reconocido → error lexico
 
 
     std::string lex(1, c);
@@ -108,7 +109,7 @@ Token LexicalAnalyzer::leerPalabraReservada() { //RETORNA UN TOKEN
     int colIni = columna;
     string lexema;
 
-    // Leer todos los caracteres alfanuméricos o guión bajo
+    // Leer todos los caracteres alfanumericos o guión bajo
     while (pos < (int)codigo.size() &&
            //mientras la posciion sea inferior al tamaño del codigo y sea indefinido o _
            (std::isalnum((unsigned char)actual()) || actual() == '_')) {
@@ -181,7 +182,7 @@ Token LexicalAnalyzer::leerString(){
 
     avanzar(); // Saltara la comilla inicial
 
-    while (pos < (int)codigo.size() && actual() != '"') {
+    while (pos < (int)codigo.size() && actual() != '"' && actual() != '\n' && actual() != ',') {
         lexema += avanzar();
     }
 
@@ -190,8 +191,8 @@ Token LexicalAnalyzer::leerString(){
         avanzar(); // Saltar la comilla final
         return { TokenType::STRING, lexema, linIn, colIn };
     }else {
-        registrarError_L(lexema, "String mal formado", "Falta comilla de cierre");
-        return { TokenType::DESCONOCIDO, lexema, linIn, colIn };
+        registrarError_L(lexema, "String mal formado", "Falta comillas de cierre");
+        return { TokenType::INCOMPLETE_STRING, lexema, linIn, colIn };
     }
 }
 
@@ -240,11 +241,13 @@ vector<Token> LexicalAnalyzer::tokenize() {
 
         if (tokens[posTok].tipo == TokenType::TABLERO) {
             qDebug() << "Encontrado TABLERO en posición" << posTok;
+
             posTok++; // Saltar TABLERO
 
             // Saltar el nombre del tablero (STRING)
             if (posTok < (int)tokens.size() && tokens[posTok].tipo == TokenType::STRING) {
-                qDebug() << "  Saltando nombre:" << QString::fromStdString(tokens[posTok].lexema);
+                qDebug() << "  Nombre del tablero:" << QString::fromStdString(tokens[posTok].lexema);
+                tableName = tokens[posTok].lexema; //ASIGNA EL NOMBREDEL TABLERO
                 posTok++;
             }
 
@@ -349,7 +352,7 @@ void LexicalAnalyzer::parseColumn(){
 void LexicalAnalyzer::parseTareas(){
     parseTarea();//MINIIMO UNA TAREA
     while (tokenActual < (int)tokens.size() &&
-           tokens[tokenActual].tipo == TokenType::COMA) {
+           tokens[tokenActual].tipo == TokenType::COMA){
         Consume(TokenType::COMA);
         parseTarea();
     }
@@ -360,11 +363,11 @@ void LexicalAnalyzer::parseTarea(){
     Consume(TokenType::tarea);
     Consume(TokenType::DOS_PUNTOS);
     Consume(TokenType::STRING);
-    Consume(TokenType::LLAVE_ABRE);
+    Consume(TokenType::CORCH_ABRE);
 
     // Procesar atributos
     while (tokenActual < (int)tokens.size() &&
-           tokens[tokenActual].tipo != TokenType::LLAVE_CIERRA) {
+           tokens[tokenActual].tipo != TokenType::CORCH_CIERRA) {
 
         if (tokens[tokenActual].tipo == TokenType::prioridad) {
             Consume(TokenType::prioridad);
@@ -376,7 +379,9 @@ void LexicalAnalyzer::parseTarea(){
             }
         }
         else if (tokens[tokenActual].tipo == TokenType::responsable) {
+
             Consume(TokenType::responsable);
+
             Consume(TokenType::DOS_PUNTOS);
             Consume(TokenType::STRING);
         }
@@ -402,128 +407,229 @@ void LexicalAnalyzer::parseTarea(){
 // -- LECTURA DE DATOS --
 
 //! REGISTRAR COLUMNAS
-void LexicalAnalyzer::registrarColumnas(const vector<Token>& tokens, int& pos) {
-    qDebug() << "LECTURA COLUMNAS";
-    //DESPUES DE TABLERO BUSCARA LLAVE ABRE
-    if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::LLAVE_ABRE) {
-        pos++; // Saltar { despues de tablero
 
-        while (pos < (int)tokens.size() && tokens[pos].tipo != TokenType::LLAVE_CIERRA) { //MIENTRAS NO ENCUENTRE LLAVE CERRADA
-            if (tokens[pos].tipo == TokenType::COLUMNA) {
+void LexicalAnalyzer::registrarColumnas(const vector<Token>& tokens, int& pos) {
+    qDebug() << "Lectura de Columnas";
+
+    // Verificar que hay una llave de apertura del tablero
+    if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::LLAVE_ABRE) {
+        pos++; // Saltar { del tablero
+
+        int nivelAnidamiento = 1;  // Contador de llaves anidadas (1 = dentro del tablero)
+        int columnaCount = 0;
+
+        while (pos < (int)tokens.size() && nivelAnidamiento > 0) {
+            Token tokenActual = tokens[pos];
+
+            qDebug() << "pos:" << pos
+                     << "Token:" << QString::fromStdString(tokenTypeToString(tokenActual.tipo))
+                     << "Nivel:" << nivelAnidamiento;
+
+            // Manejo de llaves para controlar el nivel de anidamiento
+            if (tokenActual.tipo == TokenType::LLAVE_ABRE) {
+                nivelAnidamiento++;
+                qDebug() << "  + Aumentando nivel a" << nivelAnidamiento;
+                pos++;
+            }
+            else if (tokenActual.tipo == TokenType::LLAVE_CIERRA) {
+                nivelAnidamiento--;
+                qDebug() << "  - Disminuyendo nivel a" << nivelAnidamiento;
+                pos++;
+
+                if (nivelAnidamiento == 0) {
+                    qDebug() << "  Fin del tablero encontrado";
+                    break;  // Salir del while
+                }
+            }
+            // Solo procesar COLUMNA cuando estamos en nivel 1 (dentro del tablero, no dentro de otra columna)
+            else if (nivelAnidamiento == 1 && tokenActual.tipo == TokenType::COLUMNA) {
+                columnaCount++;
                 Columna nuevaCol;
                 pos++; // Saltar COLUMNA
+
+                // Leer ':' despues de COLUMNA
                 if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) {
-                    pos++; //SALTA DOS PUNTOS
+                    pos++;
                 }
+
+                // Leer nombre de la columna
                 if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::STRING) {
                     nuevaCol.Columna = tokens[pos].lexema;
-                    qDebug() << "Columna:" << QString::fromStdString(nuevaCol.Columna);
-                    pos++; // SALTA STRING
+                    qDebug() << "Nombre columna:" << QString::fromStdString(nuevaCol.Columna);
+                    pos++;
                 }
+
+                // Abrir llaves de la columna (esto aumenta el nivel de anidamiento)
                 if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::LLAVE_ABRE) {
-                    pos++; // Saltar {
+                    pos++;
+                    nivelAnidamiento++;  // Entramos dentro de la columna
+                    qDebug() << "Entrando a columna, nivel ahora:" << nivelAnidamiento;
                 }
-                while (pos < (int)tokens.size() && tokens[pos].tipo != TokenType::LLAVE_CIERRA) {  //MIENTRAS NO ENCUENTRE LLAVE CERRADA
-                    if (tokens[pos].tipo == TokenType::tarea) { //Si encuentra tarea
-                        Tarea newTarea; //Estructura temporal de tarea
-                        pos++; // Saltar tarea y declara una nueva tarea, por cada nueva tarea se iran registrando los datos
-                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) {
-                            pos++; //SALTA 2 Puntos
+
+                // Procesar tareas dentro de la columna (mientras estemos dentro de la columna)
+                while (pos < (int)tokens.size() && nivelAnidamiento > 1) {
+                    Token t = tokens[pos];
+
+                    if (t.tipo == TokenType::LLAVE_ABRE) {
+                        nivelAnidamiento++;
+                        pos++;
+                    }
+                    else if (t.tipo == TokenType::LLAVE_CIERRA) {
+                        nivelAnidamiento--;
+                        if (nivelAnidamiento == 1) {
+                            // Salimos de la columna
+                            qDebug() << "Saliendo de columna, nivel ahora:" << nivelAnidamiento;
+                            pos++;
+                            break;
                         }
+                        pos++;
+                    }
+                    else if (t.tipo == TokenType::tarea) {
+                        // Procesar una tarea
+                        Tarea newTarea;
+                        pos++; // Saltar "tarea"
+
+                        // Leer ':'
+                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) {
+                            pos++;
+                        }
+
+                        // Leer nombre de la tarea
                         if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::STRING) {
                             newTarea.nombre_tarea = tokens[pos].lexema;
                             qDebug() << "Tarea:" << QString::fromStdString(newTarea.nombre_tarea);
-                            //agrega nombre de tarea
                             pos++;
                         }
+
+                        // Abrir corchete '['
                         if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::CORCH_ABRE) {
-                            pos++; // Saltar '['
+                            pos++;
                         }
-                        // Leer atributos dentro de CORCHETES
-                        while (pos < (int)tokens.size() && tokens[pos].tipo != TokenType::CORCH_CIERRA) { //dentro de tarea buscara hasta que no hallan corchetes
-                                    if (tokens[pos].tipo == TokenType::prioridad) {
-                                        pos++;
-                                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) pos++;
 
-                                        if (pos < (int)tokens.size() &&
-                                            (tokens[pos].tipo == TokenType::ALTA ||
-                                             tokens[pos].tipo == TokenType::MEDIA ||
-                                             tokens[pos].tipo == TokenType::BAJA ||
-                                             tokens[pos].tipo == TokenType::STRING)) {
-                                            newTarea.nivel_prioridad = tokens[pos].lexema;
-                                            qDebug() << "SE AGREGO PRIORIDAD ,Prioridad:" << QString::fromStdString(newTarea.nivel_prioridad);
-                                            pos++;
-                                        }
-                                    }
-                                    else if (tokens[pos].tipo == TokenType::responsable) {
-                                        pos++;
-                                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) pos++;
+                        // Leer atributos dentro del corchete
+                        while (pos < (int)tokens.size() && tokens[pos].tipo != TokenType::CORCH_CIERRA) {
+                            Token attr = tokens[pos];
 
-                                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::STRING) {
-                                            newTarea.responsable = tokens[pos].lexema;
-                                            qDebug() << "SE AGREGO ReSPONSABLE,Responsable:" << QString::fromStdString(newTarea.responsable);
-                                            pos++;
-                                        }
-                                    }
-                                    else if (tokens[pos].tipo == TokenType::fecha_limite) {
-                                        pos++;
-                                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) pos++;
+                            if (attr.tipo == TokenType::prioridad) {
+                                pos++;
+                                if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) pos++;
 
-                                        if (pos < (int)tokens.size() &&
-                                            (tokens[pos].tipo == TokenType::Fecha ||
-                                             tokens[pos].tipo == TokenType::NUMERO ||
-                                             tokens[pos].tipo == TokenType::STRING)) {
-                                            newTarea.fecha_limit = tokens[pos].lexema;
-                                            qDebug() << " SE AGREGO FECHA LIMIT: Fecha límite:" << QString::fromStdString(newTarea.fecha_limit);
-                                            pos++;
-                                        }
+                                if (pos < (int)tokens.size() &&
+                                    (tokens[pos].tipo == TokenType::ALTA ||
+                                     tokens[pos].tipo == TokenType::MEDIA ||
+                                     tokens[pos].tipo == TokenType::BAJA)) {
+                                    newTarea.nivel_prioridad = tokens[pos].lexema;
+                                    qDebug() << "Prioridad:" << QString::fromStdString(newTarea.nivel_prioridad);
+                                    pos++;
+                                } else if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::STRING) {
+                                    newTarea.nivel_prioridad = tokens[pos].lexema;
+                                    pos++;
+                                } else {
+                                    registrarError_L(tokens[pos].lexema, "Error lexico", "Prioridad inválida");
+                                    pos++;
+                                }
+                            }else if (attr.tipo == TokenType::responsable) {
+                                pos++;
+                                if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) pos++;
+
+                                if (pos < (int)tokens.size() &&
+                                    (tokens[pos].tipo == TokenType::STRING ||
+                                     tokens[pos].tipo == TokenType::INCOMPLETE_STRING)) {
+
+                                    newTarea.responsable = tokens[pos].lexema;
+                                    qDebug() << "Responsable:" << QString::fromStdString(newTarea.responsable);
+                                    pos++;
+
+                                    // Si fue un string incompleto, ya registramos el error
+                                    if (tokens[pos-1].tipo == TokenType::INCOMPLETE_STRING) {
+                                        qDebug() << "String incompleto detectado, RECUPERACION EN PROCESO";
+
                                     }
-                                    else if (tokens[pos].tipo == TokenType::COMA) {
-                                        pos++; //si encuetnra coma se mueve
-                                        //ACA REGRESA
-                                    }
-                                    else {
+                                } else {
+                                    registrarError_L(tokens[pos].lexema, "Error lexico", "Responsable inválido");
+                                    // Recuperación: avanzar hasta encontrar COMA o CORCH_CIERRA
+                                    int startPos = pos;
+                                    int maxSaltos = 20;
+                                    int saltos = 0;
+
+                                    while (pos < (int)tokens.size() &&
+                                           tokens[pos].tipo != TokenType::COMA &&
+                                           tokens[pos].tipo != TokenType::CORCH_CIERRA &&
+                                           saltos < maxSaltos) {
+                                        qDebug() << "SKIP: " << QString::fromStdString(tokenTypeToString(tokens[pos].tipo));
                                         pos++;
+                                        saltos++;
                                     }
-                        } //fin while Corch_Cierra
-                        //termina de leer lo que tiene dentro los corchetes
+                                }
+                            }
+                            else if (attr.tipo == TokenType::fecha_limite) {
+                                pos++;
+                                if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::DOS_PUNTOS) pos++;
+
+                                if (pos < (int)tokens.size() &&
+                                    (tokens[pos].tipo == TokenType::Fecha ||
+                                     tokens[pos].tipo == TokenType::NUMERO)) {
+                                    newTarea.fecha_limit = tokens[pos].lexema;
+                                    qDebug() << "    Fecha límite:" << QString::fromStdString(newTarea.fecha_limit);
+                                    pos++;
+                                } else {
+                                    registrarError_L(tokens[pos].lexema, "Error lexico", "Fecha inválida");
+                                    pos++;
+                                }
+                            }
+                            else if (attr.tipo == TokenType::COMA) {
+                                pos++;
+                            }
+                            else {
+                                qDebug() << "Token desconocido en atributos:"
+                                         << QString::fromStdString(tokenTypeToString(attr.tipo));
+                                pos++;
+                            }
+                        }
+
+                        // Cerrar corchete ']'
                         if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::CORCH_CIERRA) {
                             pos++;
-                        } //SALTA CORCHETE
-                        //Ahora como newTarea ya tiene contenido se envia a la columna principal
-                        nuevaCol.tarea_column.push_back(newTarea);
-                        qDebug() << " TAREA AGREGADA, BUSCANDO NUEVAS TAREAS";
-                    } //fin if tarea
+                        }
+
+                        // Validar tarea antes de agregar
+                        bool isValid = !newTarea.nombre_tarea.empty() &&
+                                       !newTarea.responsable.empty() &&
+                                       !newTarea.fecha_limit.empty();
+
+                        if (isValid) {
+                            nuevaCol.tarea_column.push_back(newTarea);
+                            qDebug() << "tarea agregada correctamente al vector de tareas";
+                        } else {
+                            qDebug() << "Tarea omitida por datos inválidos, buscando mas Tareas";
+                            ignoredTasks++;
+                        }
+
+                        // Verificar si hay coma para seguir leyendo tareas
+                        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::COMA) {
+                            pos++;
+                        }
+                    }
                     else {
                         pos++;
                     }
-                    //se mueve hasta encontrar otra palabra clave con tarea hasta que salga de las llaves
-                }//fin while LLAVE CERRADA
-                if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::LLAVE_CIERRA) {
-                    pos++;
-                }
-                if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::PUNTO_COMA) {
-                    pos++;
                 }
 
-                //cuando llegue al punto de detectar una llave cerrada agregara la columna
+                // Despues de salir de la columna, agregar la columna al storage
                 columnStorage.push_back(nuevaCol);
-                qDebug() << "Columna agregada con" << nuevaCol.tarea_column.size() << ", Buscando mas columnas";
-                //sube la columna actual y como el while no se completo sigue buscando.
-
-
-            }//Fin if columna
+                qDebug() << "Columna agregada con" << nuevaCol.tarea_column.size() << " de tareas válidas";
+            }
             else {
                 pos++;
             }
-        }//Fin while columna llave abierta
-        if (pos < (int)tokens.size() && tokens[pos].tipo == TokenType::LLAVE_CIERRA) {
-            pos++;
         }
 
-        //FINALZA ARCHIVO
+        qDebug() << "FIN DE LECTURA DE COLUMNAS!!!";
+        qDebug() << "Total columnas procesadas del Archivo:" << columnaCount;
+        qDebug() << "Columnas almacenadas : " << columnStorage.size();
     }
-    qDebug() << "ARCHIVO FINALIZADO!";
+
+    qDebug() << "ARCHIVO FINALIZADO!!!";
     mostrarContenido();
 
 }
@@ -541,5 +647,6 @@ void LexicalAnalyzer::mostrarContenido(){
             qDebug() << "    Fecha límite:" << QString::fromStdString(columnStorage[i].tarea_column[t].fecha_limit);
         }
     }
+    qDebug() << "/////////////////////////////TAREAS CON PROBLEMAS DE LEXEMAS " <<  ignoredTasks << "//////////////////////////" ;
     qDebug() << "/////////////////////////////////////////////////////////////////////////////////////////////////" ;
 }

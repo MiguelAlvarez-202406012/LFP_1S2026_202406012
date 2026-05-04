@@ -1,5 +1,0 @@
-TABLERO "Llaves Faltantes" {
-    COLUMNA "X" {
-        tarea: "Tarea B" prioridad: ALTA, responsable: "Admin", fecha_limite: 2025-11-01];
-    };
-};

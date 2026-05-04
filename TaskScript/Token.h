@@ -35,6 +35,7 @@ enum class TokenType { //TODOS LOS TIPOS DE TOKENS
     COLUMNA,
     tarea,
     prioridad,
+    INCOMPLETE_STRING,
 
     ALTA,
     MEDIA,
@@ -60,6 +61,7 @@ inline string tokenTypeToString(TokenType t) { //RETORNA el tipo de string leido
     case TokenType::DOS_PUNTOS: return "DOS_PUNTOS";
     case TokenType::FIN_ARCHIVO:   return "FIN_ARCHIVO";
     case TokenType::COMA: return "COMA";
+    case TokenType::INCOMPLETE_STRING: return "STRING INCOMPLETO";
 
         //SINTAX
     case TokenType::tarea: return "tarea";

@@ -1,6 +1,0 @@
-TABLERO "Sin Responsables" {
-    COLUMNA "Por Hacer" {
-        tarea: "Tarea A" [prioridad: ALTA, fecha_limite: 2025-06-01],
-        tarea: "Tarea B" [prioridad: MEDIA, fecha_limite: 2025-06-15];
-    };
-};

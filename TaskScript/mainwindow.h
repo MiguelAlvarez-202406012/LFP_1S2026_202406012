@@ -47,6 +47,8 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
 
     //FUNCIONES DE RETORNO
     //vectores que utilizara
+    int ignoredTasks;
+    string mainTableName;
     vector<Columna> column;
     vector<ErrorLexico> errLexico;
     vector<ErrorSintactico> errSintax;

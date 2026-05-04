@@ -36,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent) //CONSTRUCTOR DE UI (SE PUEDEN EJECUTRA 
     , ui(new Ui::MainWindow) //Inicia UI
 {
     ui->setupUi(this);
-    setWindowTitle("TaskScript Reader 0.2.4");
+    setWindowTitle("TaskScript Reader 0.2.5");
     conectarUI();
     setupTablaErrores();
     setupTablaTokens();
@@ -46,8 +46,8 @@ MainWindow::MainWindow(QWidget *parent) //CONSTRUCTOR DE UI (SE PUEDEN EJECUTRA 
 }
 
 void MainWindow::welcomeMsg(){
-    QMessageBox::about(this,"Bienvenida TaskScript 0.2.4","Bienvenido a TaskScript KANBAN \n Version: 0.2.4 "
-     "\n Porfavor es Recomendable que Lea primero la Documentacion \n de esta Programa adjunto a la Carpeta de Manuales ");
+    QMessageBox::about(this,"Bienvenida TaskScript 0.2.5","Bienvenido a TaskScript KANBAN \n Version: 0.2.5 "
+     "\n Porfavor es Recomendable que Lea primero la Documentacion \n de esta Programa adjunto a la Carpeta de Manuales");
 }
 
 
@@ -152,6 +152,8 @@ void MainWindow::analizarArchivo() { //ALTERACION
     column = lexer.columnStorage;
     errLexico = lexer.errores_L;
     errSintax = lexer.errores_S;
+    ignoredTasks = lexer.ignoredTasks;
+    mainTableName = lexer.tableName;
     //DEBEN IR EN ORDEN
 
     // Llenar tabla de tokens
@@ -470,7 +472,7 @@ QString MainWindow::dotFile(){ //genera arbol
             }
 
             // Responsable
-            if (!responsable.isEmpty()) {
+            if (!responsable.isEmpty() ||responsable != "Tarea sin cerrar") {
                 QString respNode = "Responsable_" + QString::number(col) + "_" + QString::number(t) + "_" + QString::number(nodeCounter++);
                 dot += "    " + respNode + " [label=\"RESPONSABLE\\n" + responsable +
                        "\", fillcolor=\"#e0ffe0\", shape=note];\n";
@@ -738,7 +740,7 @@ QString MainWindow::todo_Reporte(){ //CREA HTML PARA TAREAS KANBAN
         <div class="fecha">
             Fecha de generación: )" + QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss") + R"(
         </div>
-        <h2>todas las tareas se registran en el tablero KANBAN</h2>
+        <h2>Todas las Tareas registradas para el Tablero:  )" + QString::fromStdString(mainTableName) + R"( </h2>
         <div class='kanban-board'>
             )";
             //COLECCIONAR POR PRIORIDAD
@@ -790,12 +792,26 @@ QString MainWindow::todo_Reporte(){ //CREA HTML PARA TAREAS KANBAN
 
                     )";
                     //GENERAR UNA TARJETA PARA PRIORIDAD BAJA
+
+
+
                     for (int l =0; l < low.size();l++){
+
+
+
+
                         html += "<div class='task-card priority-low'>";
                             html += "<div class='task-title'>" + QString::fromStdString(low[l].nombre_tarea) +"</div>";
                             html += "<div class='task-priority priority-low'>" + QString::fromStdString(low[l].nivel_prioridad) +"</div>";
                             html += "<div class='task-date'>" + QString::fromStdString(low[l].fecha_limit) +"</div>";
-                            html += "<div class='task-assignee'>" + QString::fromStdString(low[l].responsable) +"</div>";
+                            //ME cago en todo
+                            string asignn = low[l].responsable;
+                            if(asignn != "Tarea sin cerrar" || !asignn.empty() ){
+                                html += "<div class='task-assignee'>" + QString::fromStdString(low[l].responsable) +"</div>";
+                            }else{
+                                html += "<div class='task-assignee'>" + QString::fromStdString("SIN RESPONSABLE ASIGNADO") +"</div>";
+                            }
+
                         html += "</div>";
 
                     }
@@ -817,7 +833,14 @@ QString MainWindow::todo_Reporte(){ //CREA HTML PARA TAREAS KANBAN
                         html += "<div class='task-title'>" + QString::fromStdString(medium[l].nombre_tarea) +"</div>";
                         html += "<div class='task-priority priority-medium'>" + QString::fromStdString(medium[l].nivel_prioridad) +"</div>";
                         html += "<div class='task-date'>" + QString::fromStdString(medium[l].fecha_limit) +"</div>";
-                        html += "<div class='task-assignee'>" + QString::fromStdString(medium[l].responsable) +"</div>";
+
+                        string asignn = medium[l].responsable;
+                        if(asignn != "Tarea sin cerrar" || !asignn.empty() ){
+                            html += "<div class='task-assignee'>" + QString::fromStdString(asignn) +"</div>";
+                        }else{
+                            html += "<div class='task-assignee'>" + QString::fromStdString("SIN RESPONSABLE ASIGNADO") +"</div>";
+                        }
+
                         html += "</div>";
 
                     }
@@ -839,7 +862,13 @@ QString MainWindow::todo_Reporte(){ //CREA HTML PARA TAREAS KANBAN
                         html += "<div class='task-title'>" + QString::fromStdString(high[l].nombre_tarea) +"</div>";
                         html += "<div class='task-priority priority-high'>" + QString::fromStdString(high[l].nivel_prioridad) +"</div>";
                         html += "<div class='task-date'>" + QString::fromStdString(high[l].fecha_limit) +"</div>";
-                        html += "<div class='task-assignee'>" + QString::fromStdString(high[l].responsable) +"</div>";
+                        string asignn = high[l].responsable;
+                        if(asignn != "Tarea sin cerrar" || !asignn.empty() ){
+                            html += "<div class='task-assignee'>" + QString::fromStdString(asignn) +"</div>";
+                        }else{
+                            html += "<div class='task-assignee'>" + QString::fromStdString("SIN RESPONSABLE ASIGNADO") +"</div>";
+                        }
+
                         html += "</div>";
 
                     }
@@ -1017,8 +1046,8 @@ QString MainWindow::carga_per_user(){
 
 
 
-        if(responsable == "" || responsable.empty()){
-        html += "<td>" + QString::fromStdString("Sin RESPONSABLE!") + "<td>\n"; //Emcargado
+        if(responsable == "" || responsable.empty() || responsable == "Tarea sin cerrar"){
+        html += "<td>" + QString::fromStdString("Sin RESPONSABLE ASIGNADO!") + "<td>\n"; //Emcargado
         }else{
         html += "<td>" + QString::fromStdString(responsable) + "<td>\n"; //Emcargado
         }
@@ -1033,7 +1062,7 @@ QString MainWindow::carga_per_user(){
     html += R"(
             </tbody>
         </table>
-
+        <div class="fecha">Tareas Ignoradas Durante el analisis: )" + QString::number(ignoredTasks) + R"( </div>
     </div>
 </body>
 </html>
@@ -1114,6 +1143,7 @@ QString MainWindow::lexicalErrors(){
 </head>
 <body>
     <h2>Errores encontrados durante el analisis de los archivos .task</h2>
+    <div class="fecha">Tareas Ignoradas Durante el analisis: )" + QString::number(ignoredTasks) + R"( </div>
     <div class="container">
         <h1>ERRORES LEXICOS</h1>
         <div class="fecha">

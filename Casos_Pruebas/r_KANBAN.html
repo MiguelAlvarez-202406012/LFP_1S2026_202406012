@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte KANBAN</title>
+<style>
+ body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: #373737;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: rgb(15, 15, 15);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #ba6824;
+            border-bottom: 3px solid #ff7b00da;
+            padding-bottom: 10px;
+        }
+        h2{  color: #e1af52; border-bottom: 3px solid #ff7b00da; padding-bottom: 10px; }
+
+        .fecha {
+            color: #7f8c8d;
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #e87714;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background-color: #41362c;
+        }
+
+        .kanban-board {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                padding: 20px;
+                background: #ff7b00;
+                font-family: 'Segoe UI', sans-serif;
+        }
+
+        .kanban-column {
+            background: #2e2e2e;
+            border-radius: 10px;
+            padding: 12px;
+            height: fit-content;
+        }
+
+        .column-header {
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .column-header h2 {
+            font-size: 1.1em;
+            margin: 0;
+            color: #e7873e;
+        }
+
+        .badge {
+            background: #422c090f;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: rgb(255, 177, 128);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(58, 5, 22, 0.15);
+        }
+
+        .task-title {
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .priority-high {
+            border-left-color: #ff0015;
+        }
+        .priority-high .task-priority {
+            color: #ff0015;
+            background: #7f050f36;
+        }
+
+        .priority-medium {
+            border-left-color: #74461c;
+        }
+        .priority-medium .task-priority {
+            color: #ffa502;
+            background: #73410e2d;
+        }
+
+        .priority-low {
+            border-left-color: #3af636;
+        }
+        .priority-low {
+            color:  #3af636;
+            background: #2ed5731a;
+        }
+
+        .task-priority {
+            display: inline-block;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin: 6px 0;
+        }
+
+        .task-date, .task-assignee  {
+            display: inline-block;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin: 6px 0;
+
+            color: #ffffff;
+            margin-top: 6px;
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> KANBAN </h1>
+        <div class="fecha">
+            Fecha de generación: 04/05/2026 12:19:34
+        </div>
+        <h2>Todas las Tareas registradas para el Tablero Proyecto Software 2026 </h2>
+        <div class='kanban-board'>
+            
+
+            <div class="kanban-column">
+                <div class="column-header">
+                    <h2>PRIORIDAD BAJA
+                     <span class='badge'>No. Tareas: 7</span>
+                    </h2>
+                     </div>
+
+
+                    <div class='task-card priority-low'><div class='task-title'>Estudiar competencia</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-05-20</div><div class='task-assignee'>Pedro</div></div><div class='task-card priority-low'><div class='task-title'>API REST</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-05-30</div><div class='task-assignee'>Luis</div></div><div class='task-card priority-low'><div class='task-title'>Revisión de estilos</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-06</div><div class='task-assignee'>Pedro</div></div><div class='task-card priority-low'><div class='task-title'>Ajustes de rendimiento</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-06-08</div><div class='task-assignee'>María</div></div><div class='task-card priority-low'><div class='task-title'>Configurar entorno</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-04-10</div><div class='task-assignee'>Luis</div></div><div class='task-card priority-low'><div class='task-title'>Instalar dependencias</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-04-12</div><div class='task-assignee'>Ana</div></div><div class='task-card priority-low'><div class='task-title'>Planificación inicial</div><div class='task-priority priority-low'>BAJA</div><div class='task-date'>2026-04-01</div><div class='task-assignee'>Pedro</div></div>
+             </div>
+            <div class="kanban-column">
+                <div class="column-header">
+                    <h2>PRIORIDAD MEDIA
+                     <span class='badge'>No. Tareas: 5</span>
+                    </h2>
+                </div>
+                    <div class='task-card priority-medium'><div class='task-title'>Crear mockups</div><div class='task-priority priority-medium'>MEDIA</div><div class='task-date'>2026-05-12</div><div class='task-assignee'>Luis</div></div><div class='task-card priority-medium'><div class='task-title'>Revisar documentación</div><div class='task-priority priority-medium'>MEDIA</div><div class='task-date'>2026-13-05</div><div class='task-assignee'>Ana</div></div><div class='task-card priority-medium'><div class='task-title'>Módulo de reportes</div><div class='task-priority priority-medium'>MEDIA</div><div class='task-date'>2026-05-28</div><div class='task-assignee'>Tarea sin cerrar</div></div><div class='task-card priority-medium'><div class='task-title'>Pruebas unitarias</div><div class='task-priority priority-medium'>MEDIA</div><div class='task-date'>2026-06-01</div><div class='task-assignee'>Ana</div></div><div class='task-card priority-medium'><div class='task-title'>Crear repositorio</div><div class='task-priority priority-medium'>MEDIA</div><div class='task-date'>2026-04-05</div><div class='task-assignee'>Jorge</div></div>
+                </div>
+            <div class="kanban-column">
+                <div class="column-header">
+                    <h2>PRIORIDAD ALTA
+                     <span class='badge'>No. Tareas: 5</span>
+                    </h2>
+                </div>
+                    <div class='task-card priority-high'><div class='task-title'>Diseñar base de datos</div><div class='task-priority priority-high'>ALTA</div><div class='task-date'>2026-05-15</div><div class='task-assignee'>Carlos</div></div><div class='task-card priority-high'><div class='task-title'>Definir requerimientos</div><div class='task-priority priority-high'>ALTA</div><div class='task-date'>2026-05-10</div><div class='task-assignee'>María</div></div><div class='task-card priority-high'><div class='task-title'>Validar flujos</div><div class='task-priority priority-high'>ALTA</div><div class='task-date'>2026-05-18</div><div class='task-assignee'>Jorge</div></div><div class='task-card priority-high'><div class='task-title'>Implementar login</div><div class='task-priority priority-high'>ALTA</div><div class='task-date'>2026-05-25</div><div class='task-assignee'>Carlos</div></div><div class='task-card priority-high'><div class='task-title'>Code review módulo auth</div><div class='task-priority priority-high'>ALTA</div><div class='task-date'>2026-06-03</div><div class='task-assignee'>Jorge</div></div>
+                 </div>
+
+                 </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+    

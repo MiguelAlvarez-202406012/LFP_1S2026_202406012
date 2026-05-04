@@ -48,7 +48,8 @@ public:
     // Errores acumulados durante el análisis
     vector<ErrorLexico> errores_L; // almacena errores lexicos
     vector<ErrorSintactico> errores_S; //almacena los errores sintacticos
-
+    int ignoredTasks = 0;
+    string tableName = "";
     bool parse();
 
 private:
@@ -57,6 +58,7 @@ private:
     int pos;         // Posición actual en el string
     int linea;       //EN QUE LINEA
     int columna;        //EN QUE COLUMNA
+
     char actual();        // Carácter en pos actual
     char avanzar();       // Avanza y retorna el siguiente carácter
     void saltarBlancos(); // Ignora espacios, tabs, saltos de línea

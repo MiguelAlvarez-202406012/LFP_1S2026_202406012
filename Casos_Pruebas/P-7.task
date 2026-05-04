@@ -1,5 +1,0 @@
-TABLERO "Proyecto Inconcluso {
-    COLUMNA "A" {
-        tarea: "Tarea X" [prioridad: ALTA, responsable: "Juan, fecha_limite: 2025-09-01];
-    };
-};
