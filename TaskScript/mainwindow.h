@@ -36,6 +36,7 @@ private slots:
     void abrirReporte2(); //CARGA
     void abrirReporte5(); //ERRORES
 
+
     //UNUSED
 
 
@@ -63,6 +64,7 @@ private: //DONDE SE ALMACENARAN TODAS FUNCIONES QUE NO RESPONDEN A EVENTOS POR M
     QString dotFile(); //ARBOL SINTAXIS .DOT
     QString clearCorrupted(const string& texto); //limpiar comillas pedorras
 
+    void welcomeMsg();
     void setDisable();
     void setupTablaTokens();
     void setupTablaErrores();

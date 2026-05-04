@@ -36,13 +36,18 @@ MainWindow::MainWindow(QWidget *parent) //CONSTRUCTOR DE UI (SE PUEDEN EJECUTRA 
     , ui(new Ui::MainWindow) //Inicia UI
 {
     ui->setupUi(this);
-    setWindowTitle("TaskScript Reader 0.2.3");
-
+    setWindowTitle("TaskScript Reader 0.2.4");
     conectarUI();
     setupTablaErrores();
     setupTablaTokens();
     setupTablaErroresS();
     this->setFixedSize(1095 , 536);
+    welcomeMsg();
+}
+
+void MainWindow::welcomeMsg(){
+    QMessageBox::about(this,"Bienvenida TaskScript 0.2.4","Bienvenido a TaskScript KANBAN \n Version: 0.2.4 "
+     "\n Porfavor es Recomendable que Lea primero la Documentacion \n de esta Programa adjunto a la Carpeta de Manuales ");
 }
 
 

@@ -281,7 +281,7 @@ QpushButton::disabled{
       <string>KANBAN</string>
      </property>
      <property name="icon">
-      <iconset theme="QIcon::ThemeIcon::DriveOptical"/>
+      <iconset theme="QIcon::ThemeIcon::AddressBookNew"/>
      </property>
     </widget>
     <widget class="QPushButton" name="btnReporte2">
@@ -299,6 +299,9 @@ QpushButton::disabled{
      <property name="text">
       <string>ENCARGOS</string>
      </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::EditCopy"/>
+     </property>
     </widget>
     <widget class="QPushButton" name="btnReporte5">
      <property name="geometry">
@@ -313,7 +316,11 @@ QpushButton::disabled{
       <string notr="true">background-color: rgb(50, 50, 50);</string>
      </property>
      <property name="text">
-      <string>ERRORES LEXICOS Y SINTACTICOS</string>
+      <string>ERRORES LEXICOS 
+  Y SINTACTICOS</string>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::DocumentPageSetup"/>
      </property>
     </widget>
    </widget>
